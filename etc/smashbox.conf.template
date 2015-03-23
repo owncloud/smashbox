@@ -132,3 +132,12 @@ reset_server_log = False
 # used in a test run to allow for more users sharing at time
 #
 share_sets = 1
+
+# username_list is used to identify a list of existing users to use during
+# testing.  Ideally, the list needs to be at least num_test_users long.
+# Below is an example of how to set the list when testing with LDAP users.
+#
+# username_list = ['abagail_kuhic', 'abagail_kuhlman_III', 'abagail_runolfsdottir']
+#
+username_list = "[]"
+
