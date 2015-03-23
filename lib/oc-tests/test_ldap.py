@@ -113,12 +113,8 @@ def sharer(step):
 
     step (4,'Sharer shares files')
 
-    if config.use_ldap_users:
-        user1 = config.ldap_usernames[0]
-        user2 = config.ldap_usernames[1]
-    else:
-        user1 = "%s%i"%(config.oc_account_name, 1)
-        user2 = "%s%i"%(config.oc_account_name, 2)
+    user1 = "%s%i"%(config.oc_account_name, 1)
+    user2 = "%s%i"%(config.oc_account_name, 2)
 
     kwargs = {'perms': sharePermissions}
     shared['TEST_FILE_USER_SHARE'] = share_file_with_user ('TEST_FILE_USER_SHARE.dat', user1, user2, **kwargs)
@@ -180,13 +176,8 @@ def shareeOne(step):
 
     step (8, 'Sharee One share files with user 3')
 
-    if config.use_ldap_users:
-        user2 = config.ldap_usernames[1]
-        user3 = config.ldap_usernames[2]
-    else:
-        user2 = "%s%i"%(config.oc_account_name, 2)
-        user3 = "%s%i"%(config.oc_account_name, 3)
-
+    user2 = "%s%i"%(config.oc_account_name, 2)
+    user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': sharePermissions}
     result = share_file_with_user ('TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
 

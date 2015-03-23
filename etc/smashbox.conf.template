@@ -123,3 +123,12 @@ del os
 # set it to True or False to override
 # 
 pycurl_verbose = None
+
+# use LDAP users.
+#
+use_ldap_users = False
+
+# there should be as many users in the list as num_test_users
+list_of_user_names = "[]"
+
+
