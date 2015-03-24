@@ -565,6 +565,37 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
             return -2
 
 
+def share_file_with_link(filename, sharer):
+    """ Shares a file with a link
+
+    :param filename: name of the file being shared
+    :param sharer: the user doing the sharing
+    :returns: share info containing share_id and link
+
+    """
+    logger.info('%s is sharing file %s with link', sharer, filename)
+
+    oc_api = get_oc_api()
+    oc_api.login(sharer, config.oc_account_password)
+
+    try:
+        share_info = oc_api.share_file_with_link(filename)
+        logger.info('share id for file share is %s', str(share_info.share_id))
+        logger.info('share link for file share is %s', str(share_info.link))
+        return share_info
+    except Exception as err:
+
+        # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
+
+        logger.info('Share failed with %s', str(err))
+        if "not allowed to share" in str(err):
+            return -1
+        else:
+            return -2
+
+
+
+
 def delete_share(sharer, share_id):
     """ Deletes a share
 
