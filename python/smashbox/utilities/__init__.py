@@ -657,3 +657,18 @@ def expect_does_not_exist(fn):
     """ Checks that a file does not exist, as expected
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
+
+
+def download_file(url, filename):
+    """Downloads a file in a path given (filename) if just the name of the file is given 
+       it is download locally
+    """
+    with open(filename, 'wb') as handle:
+        response = requests.get(url, stream=False)
+
+        if response.status_code == 200 :
+            for block in response.iter_content(1024):
+                if not block:
+                    break
+
+                handle.write(block) 
