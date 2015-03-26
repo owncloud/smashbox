@@ -568,10 +568,7 @@ def share_file_with_link(filename, sharer):
         # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
 
         logger.info('Share failed with %s', str(err))
-        if "not allowed to share" in str(err):
-            return -1
-        else:
-            return -2
+        raise ValueError('Share file by link failed')
 
 
 def delete_share(sharer, share_id):
@@ -688,16 +685,16 @@ def expect_does_not_exist(fn):
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
 
-def download_file(url, filename):
+def download_file(url, filename, chunk_size=4096):
     """Downloads a file in a path given (filename) if just the name of the file is given 
        it is download locally
     """
     with open(filename, 'wb') as handle:
-        response = requests.get(url, stream=False)
+        response = requests.get(url, stream=True)
 
         if response.status_code == 200 :
-            for block in response.iter_content(1024):
+            for block in response.iter_content(chunk_size):
                 if not block:
                     break
 
-                handle.write(block) 
+                handle.write(block)
