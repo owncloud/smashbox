@@ -57,6 +57,15 @@ testsets = [
 ]
 
 def expect_content(fn,md5):
+    logger.warning('DEBUGGING expect_content: ' + fn)
+    logger.warning('DEBUGGING dirname: ' + os.path.dirname(fn))
+    cmd = 'ls -l %s'
+    logger.warning(runcmd(cmd%(os.path.dirname(fn))))
+
+    cmdFileExists = '[ -f %s ] && echo "Found" || echo "Not found"'
+    logger.warning(runcmd(cmdFileExists%(os.path.dirname(fn))))
+    logger.warning(runcmd(cmdFileExists%(fn)))
+
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5, "inconsistent md5 of %s: expected %s, got %s"%(fn,md5,actual_md5))
 
@@ -101,6 +110,10 @@ def creator(step):
     step(1,'create initial content and sync')
 
     d = make_workdir()
+    cmd = 'ls -l %s'
+    logger.warning(d)
+    logger.warning(runcmd(cmd%(d)))
+    logger.warning(runcmd(cmd%(os.path.dirname(d))))
 
     # files *_NONE are not modified by anyone after initial sync
     # files *_LOSER are modified by the loser but not by the winner

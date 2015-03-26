@@ -1,0 +1,74 @@
+language: php
+php:
+#  - 5.4
+  - 5.5
+#  - 5.6
+#  - hhvm
+
+env:
+  global:
+    - CORE_BRANCH=stable8
+    - APP_NAME=smashbox
+    - DB=sqlite
+  matrix:
+    - TEST_NAME=test_shareFile
+
+branches:
+  only:
+    - master
+    - /^stable\d*$/
+
+services:
+  - redis-server
+
+before_install:
+  # Setup ownCloud Server
+  #######################
+  - wget https://raw.githubusercontent.com/owncloud/administration/master/travis-ci/before_install.sh
+  - bash ./before_install.sh $APP_NAME $CORE_BRANCH $DB
+  - cd ../core/
+  - touch data/owncloud.log
+
+  # Setup the client apt-get so we can use the "apt-get update" of "./travis/setup-webserver.sh"
+  - sudo add-apt-repository "deb http://download.opensuse.org/repositories/isv:/ownCloud:/community:/nightly/xUbuntu_14.10/ /"
+  - wget http://download.opensuse.org/repositories/isv:/ownCloud:/community:/nightly/xUbuntu_14.10/Release.key
+  - sudo apt-key add - < Release.key
+
+  # Check if the server is up and running
+  #######################################
+  # FIXME 8.1+ only: - ./occ check
+  - ./occ status
+  - ./occ app:list
+  - cd apps/$APP_NAME
+  - bash ./travis/setup-webserver.sh
+
+  # Test the status.php site
+  - wget http://localhost/core/status.php -O status.php.txt
+  - echo "\n" >> status.php.txt # Append something for the new line that is missing
+  - cat status.php.txt
+
+  # Install python, pycoclient and client
+  #######################################
+  - sudo pip install requests
+  - git clone https://github.com/owncloud/pyocclient.git --depth 1 src/pyocclient
+  - export PYTHONPATH=./src/pyocclient
+  - sudo apt-get install owncloud-client
+
+  # Output the log before
+  - cat ../../data/owncloud.log
+
+  # Copy the config in place
+  - mkdir ~/build/smashdir
+  - mv etc/smashbox.conf.travis etc/smashbox.conf
+
+script:
+
+  # Run smashbox tests
+  - bin/smash lib/oc-tests/test_shareFile.py
+
+after_script:
+  # Output the logs
+  - cat ../../data/owncloud.log
+  # FIXME longer then 10k lines, travis asks you to not output that
+  # - cat ~/smashdir/log-test_basicSync.log
+
