@@ -541,7 +541,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url)
+    oc_api = owncloud.Client(url, debug=False)
     return oc_api
 
 
@@ -648,9 +648,8 @@ def check_users(num_test_users=None):
             else:
                 username = "%s%i" % (config.oc_account_name, i)
 
-# FIXME: these two lines need to be outside the else once #15084 is resolved                
-                result = check_owncloud_account(username)
-                error_check(result, 'User %s not found' % username)
+            result = check_owncloud_account(username)
+            error_check(result, 'User %s not found' % username)
 
 
 def check_groups(num_groups=None):
