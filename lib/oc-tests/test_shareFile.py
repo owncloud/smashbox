@@ -115,9 +115,9 @@ def sharer(step):
 
     step (4,'Sharer shares files')
 
-    if config.ldap_usernames:
-        user1 = config.ldap_usernames[0]
-        user2 = config.ldap_usernames[1]
+    if config.username_list:
+        user1 = config.username_list[0]
+        user2 = config.username_list[1]
     else:
         user1 = "%s%i"%(config.oc_account_name, 1)
         user2 = "%s%i"%(config.oc_account_name, 2)
@@ -182,9 +182,9 @@ def shareeOne(step):
 
     step (8, 'Sharee One share files with user 3')
 
-    if config.ldap_usernames:
-        user2 = config.ldap_usernames[1]
-        user3 = config.ldap_usernames[2]
+    if config.username_list:
+        user2 = config.username_list[1]
+        user3 = config.username_list[2]
     else:
         user2 = "%s%i"%(config.oc_account_name, 2)
         user3 = "%s%i"%(config.oc_account_name, 3)
