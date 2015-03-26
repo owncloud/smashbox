@@ -124,11 +124,11 @@ del os
 # 
 pycurl_verbose = None
 
-# use LDAP users.
-#
-use_ldap_users = False
-
-# there should be as many users in the list as num_test_users
-list_of_user_names = "[]"
+# To test with LDAP users, uncomment and enter a list of ldap users 
+# There should be at least as many users in the list as num_test_users
+# For example: 
+# ldap_usernames = ['abagail_kuhic', 'abagail_kuhlman_III', 'abagail_runolfsdottir']
+# 
+# ldap_usernames = []
 
 
