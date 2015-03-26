@@ -568,7 +568,7 @@ def share_file_with_link(filename, sharer):
         # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
 
         logger.info('Share failed with %s', str(err))
-        raise ValueError('Share file by link failed')
+        raise err
 
 
 def delete_share(sharer, share_id):
