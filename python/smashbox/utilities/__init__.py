@@ -36,7 +36,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     else:
         logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
-    if reset_procedure == 'delete' and not config.use_ldap_users:
+    if reset_procedure == 'delete' and not config.ldap_usernames:
         if num_test_users is None:
             delete_owncloud_account(config.oc_account_name)
             create_owncloud_account(config.oc_account_name, config.oc_account_password)
@@ -218,7 +218,7 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
-        if config.use_ldap_users:
+        if config.ldap_usernames:
             username = config.ldap_usernames[user_num-1] 
         else:
             username = "%s%i" % (config.oc_account_name, user_num)
@@ -640,16 +640,16 @@ def check_users(num_test_users=None):
     """
     if num_test_users is None:
         result = check_owncloud_account(config.oc_account_name)
-        error_check(result, 'User %s not found' % config.oc_account_name)
+        fatal_check(result, 'User %s not found' % config.oc_account_name)
     else:
         for i in range(1, num_test_users + 1):
-            if config.use_ldap_users:
+            if config.ldap_usernames:
                 username = config.ldap_usernames[i-1] 
             else:
                 username = "%s%i" % (config.oc_account_name, i)
 
             result = check_owncloud_account(username)
-            error_check(result, 'User %s not found' % username)
+            fatal_check(result, 'User %s not found' % username)
 
 
 def check_groups(num_groups=None):

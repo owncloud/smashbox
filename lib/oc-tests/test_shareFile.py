@@ -59,6 +59,7 @@ Data Providers:
 from smashbox.utilities import *
 import glob
 import time
+import sys
 
 OCS_PERMISSION_READ = 1
 OCS_PERMISSION_UPDATE = 2
@@ -96,6 +97,7 @@ def setup(step):
     d = make_workdir()
     scrape_log_file(d)
 
+
 @add_worker
 def sharer(step):
 
@@ -118,7 +120,7 @@ def sharer(step):
 
     step (4,'Sharer shares files')
 
-    if config.use_ldap_users:
+    if config.ldap_usernames:
         user1 = config.ldap_usernames[0]
         user2 = config.ldap_usernames[1]
     else:
@@ -185,7 +187,7 @@ def shareeOne(step):
 
     step (8, 'Sharee One share files with user 3')
 
-    if config.use_ldap_users:
+    if config.ldap_usernames:
         user2 = config.ldap_usernames[1]
         user3 = config.ldap_usernames[2]
     else:
