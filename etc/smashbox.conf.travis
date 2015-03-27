@@ -33,7 +33,7 @@ oc_account_password="test"
 
 # owncloud test server
 # if left blank or "localhost" then the real hostname of the localhost will be set
-oc_server = 'localhost'
+oc_server = 'travis'
 
 
 # root of the owncloud installation as visible in the URL
