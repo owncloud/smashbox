@@ -98,6 +98,7 @@ def setup(step):
     scrape_log_file(d)
 
 
+
 @add_worker
 def sharer(step):
 
