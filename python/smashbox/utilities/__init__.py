@@ -135,7 +135,27 @@ def check_owncloud_account(username):
 
     oc_api = get_oc_api()
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
-    exists = oc_api.user_exists(username)
+
+#
+# LDAP users can have a space in their names; ownCloud does not support
+# spaces in usernames so the space gets converted to an underscore.
+# When we search for the ldap user with a space in the name, we need
+# to remove the underscore to find the user.  To do this, if the username
+# being searched for has an underscore in it, we will search for users with
+# names that begin with the input username up to the underscore and then search
+# for the actual username in the result.
+#
+
+    exists = False
+    index = username.find ('_')
+    if index > -1:
+        name_to_search_for = username[:index]
+        user_list = oc_api.get_user_list(name_to_search_for) 
+        if username in user_list:
+            exists = True
+    else:
+        exists = oc_api.user_exists(username)
+
     return exists
 
 
