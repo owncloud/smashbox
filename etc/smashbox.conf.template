@@ -136,3 +136,10 @@ share_sets = 1
 #
 # scp port to be used in scp commands, used primarily when copying over the server log file
 scp_port=22
+
+#
+# properties for defining directory depth and directory layout
+#
+dir_depth = 5
+dir_depth_style = flat
+file_row_count = 100
