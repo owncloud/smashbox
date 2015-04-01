@@ -69,17 +69,7 @@ TEST_FILES = ['TEST_FILE_USER_SHARED_%02d.dat'%i for i in range(nfiles)]
 filesizeKB = int(config.get('share_filesizeKB',10))
 sharePermissions = config.get('test_sharePermissions', OCS_PERMISSION_ALL)
 
-testsets = [
-    { 
-        'test_sharePermissions':OCS_PERMISSION_ALL
-    },
-    { 
-        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE
-    },
-    { 
-        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_SHARE
-    }
-]
+
 
 @add_worker
 def setup(step):
@@ -101,8 +91,6 @@ def user1_worker(step):
     test_folder = mkdir(os.path.join(d,'test'))
 
     shared = reflection.getSharedObject()
-    #shared['md5_sharer'] = md5sum(os.path.join(d,'test'))
-    #logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
     list_files(os.path.join(d,'test'))
@@ -132,13 +120,6 @@ def user2_worker(step):
     run_ocsync(d,user_num=2)
     list_files(d)
 
-    # for i in range(nfiles):
-    #     sharedFile = os.path.join(os.path.join(d,test_folder),TEST_FILES[i])
-    #     logger.info ('Checking that %s is present in local directory for user2', sharedFile)
-    #     error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
-
- 
-
     step (6, 'user2 creates folder sub and uploads test files into it')
     sub_folder = mkdir(os.path.join(d,'sub'))
 
@@ -146,8 +127,6 @@ def user2_worker(step):
         createfile(os.path.join(sub_folder,TEST_FILES[i]),'0',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
-    #shared['md5_sharer'] = md5sum(os.path.join(d,'sub'))
-    #logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
     run_ocsync(d,user_num=2)
@@ -156,7 +135,7 @@ def user2_worker(step):
     step (7, 'user2 shares sub folder by link')
 
     user2 = "%s%i"%(config.oc_account_name, 2)
-    #SHARING NOT SURE ABOUT THE WAY TO CALL THIS INSTRUCTION
+
     link_info = share_file_with_link('sub', user2)
 
     shared = reflection.getSharedObject()
@@ -172,19 +151,6 @@ def user2_worker(step):
 
     step (11, 'user2 final step')
 
-
-
-# def download_file(url, filename):
-
-#     with open(filename, 'wb') as handle:
-#         response = requests.get(url, stream=False)
-
-#         if response.status_code == 200 :
-#             for block in response.iter_content(1024):
-#                 if not block:
-#                     break
-
-#                 handle.write(block) 
 
 @add_worker
 def user3_worker(step):

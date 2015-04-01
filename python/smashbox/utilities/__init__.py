@@ -564,9 +564,6 @@ def share_file_with_link(filename, sharer):
         logger.info('share link for file share is %s', str(share_info.link))
         return share_info
     except Exception as err:
-
-        # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
-
         logger.info('Share failed with %s', str(err))
         raise err
 
