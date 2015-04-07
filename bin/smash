@@ -206,6 +206,7 @@ def main():
             run_multiprocessing_engine(config,os.path.abspath(t))
 
       for j in range(1,args.loop+1):
+         log_quiet ("Running iteration %d" % j)
          if args.all_testsets or args.testset is not None:
             smashbox.no_engine.testsets=[None]
             execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
