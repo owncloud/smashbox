@@ -36,7 +36,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     else:
         logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
-    if reset_procedure == 'delete':
+    if reset_procedure == 'delete' and not config.username_list:
         if num_test_users is None:
             delete_owncloud_account(config.oc_account_name)
             create_owncloud_account(config.oc_account_name, config.oc_account_password)
@@ -135,7 +135,27 @@ def check_owncloud_account(username):
 
     oc_api = get_oc_api()
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
-    exists = oc_api.user_exists(username)
+
+#
+# LDAP users can have a space in their names; ownCloud does not support
+# spaces in usernames so the space gets converted to an underscore.
+# When we search for the ldap user with a space in the name, we need
+# to remove the underscore to find the user.  To do this, if the username
+# being searched for has an underscore in it, we will search for users with
+# names that begin with the input username up to the underscore and then search
+# for the actual username in the result.
+#
+
+    exists = False
+    index = username.find ('_')
+    if index > -1:
+        name_to_search_for = username[:index]
+        user_list = oc_api.get_user_list(name_to_search_for) 
+        if username in user_list:
+            exists = True
+    else:
+        exists = oc_api.user_exists(username)
+
     return exists
 
 
@@ -218,7 +238,10 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
-        username = "%s%i" % (config.oc_account_name, user_num)
+        if config.username_list:
+            username = config.username_list[user_num-1] 
+        else:
+            username = "%s%i" % (config.oc_account_name, user_num)
 
     if hide_password:
         password = "***"
@@ -542,7 +565,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url)
+    oc_api = owncloud.Client(url, debug=False)
     return oc_api
 
 
@@ -641,12 +664,16 @@ def check_users(num_test_users=None):
     """
     if num_test_users is None:
         result = check_owncloud_account(config.oc_account_name)
-        error_check(result, 'User %s not found' % config.oc_account_name)
+        fatal_check(result, 'User %s not found' % config.oc_account_name)
     else:
         for i in range(1, num_test_users + 1):
-            username = "%s%i" % (config.oc_account_name, i)
+            if config.username_list:
+                username = config.username_list[i-1] 
+            else:
+                username = "%s%i" % (config.oc_account_name, i)
+
             result = check_owncloud_account(username)
-            error_check(result, 'User %s not found' % username)
+            fatal_check(result, 'User %s not found' % username)
 
 
 def check_groups(num_groups=None):

@@ -14,4 +14,5 @@ sed -i 's/oc_ssl_enabled.*/oc_ssl_enabled = False/' smashbox.conf
 sed -i 's/oc_server_shell_cmd.*/oc_server_shell_cmd = "ssh root@172.18.5.74"/' smashbox.conf
 sed -i 's/oc_server_tools_path.*/oc_server_tools_path = "\/usr\/local\/jenkins\/workspace\/smashbox\/server-tools"/' smashbox.conf
 sed -i 's/oc_sync_cmd.*/oc_sync_cmd = "\/usr\/bin\/owncloudcmd --trust"/' smashbox.conf
-
+sed -i 's/use_ldap_users = False/use_ldap_users = True/' smashbox.conf
+sed -i 's/\[\]/[abagail_kuhic,abagail_kuhlman_iii,agagail_runolfsdottir]'/ smashbox.conf
