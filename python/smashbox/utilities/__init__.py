@@ -496,7 +496,7 @@ def scrape_log_file(d):
         return
 
     d = make_workdir()
-    cmd = 'scp root@%s:%s/owncloud.log %s/.' % (config.oc_server, config.oc_server_datadirectory, d)
+    cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
     rtn_code = runcmd(cmd)
 
     logger.info('copy command returned %s', rtn_code)
