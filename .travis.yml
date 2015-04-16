@@ -1,28 +1,36 @@
 language: php
-php:
-#  - 5.4
-  - 5.5
-#  - 5.6
-#  - hhvm
+
+matrix:
+  include:
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_reshareDir
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_scrapeLogFile
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_shareDir
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_shareFile
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_shareGroup
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_sharePermissions
+    - php: 5.5
+      env: TEST_NAME=oc-tests/test_uploadFiles
+  allow_failures:
+    - env: TEST_NAME=oc-tests/test_shareGroup
+    - env: TEST_NAME=oc-tests/test_sharePermissions
+  fast_finish: true
+
+branches:
+  only:
+    - master
+    - /^stable\d*$/
 
 env:
   global:
     - CORE_BRANCH=stable8
     - APP_NAME=smashbox
     - DB=sqlite
-  matrix:
-    - TEST_NAME=oc-tests/test_reshareDir
-    - TEST_NAME=oc-tests/test_scrapeLogFile
-    - TEST_NAME=oc-tests/test_shareDir
-    - TEST_NAME=oc-tests/test_shareFile
-    - TEST_NAME=oc-tests/test_shareGroup
-    - TEST_NAME=oc-tests/test_sharePermissions
-    - TEST_NAME=oc-tests/test_uploadFiles
-
-branches:
-  only:
-    - master
-    - /^stable\d*$/
 
 services:
   - redis-server
