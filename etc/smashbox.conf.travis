@@ -132,3 +132,7 @@ reset_server_log = False
 # used in a test run to allow for more users sharing at time
 #
 share_sets = 3
+
+#
+# scp port to be used in scp commands, used primarily when copying over the server log file
+scp_port=22
