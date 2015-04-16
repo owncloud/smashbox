@@ -11,7 +11,13 @@ env:
     - APP_NAME=smashbox
     - DB=sqlite
   matrix:
-    - TEST_NAME=test_shareFile
+    - TEST_NAME=oc-tests/test_reshareDir
+    - TEST_NAME=oc-tests/test_scrapeLogFile
+    - TEST_NAME=oc-tests/test_shareDir
+    - TEST_NAME=oc-tests/test_shareFile
+    - TEST_NAME=oc-tests/test_shareGroup
+    - TEST_NAME=oc-tests/test_sharePermissions
+    - TEST_NAME=oc-tests/test_uploadFiles
 
 branches:
   only:
@@ -64,7 +70,7 @@ before_install:
 script:
 
   # Run smashbox tests
-  - bin/smash lib/oc-tests/test_shareFile.py
+  - bin/smash lib/$TEST_NAME.py
 
 after_script:
   # Output the logs
