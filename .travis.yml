@@ -28,7 +28,7 @@ branches:
 
 env:
   global:
-    - CORE_BRANCH=stable8
+    - CORE_BRANCH=master
     - APP_NAME=smashbox
     - DB=sqlite
 
