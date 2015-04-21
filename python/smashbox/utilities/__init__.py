@@ -279,10 +279,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
 
     if echo:
         if stdout.strip():
-            if not (('ls -l ' in cmd) or ('md5' in cmd) or ('&& echo "Found" || echo "Not found"' in cmd)):
-                logger.info("stdout: %s",stdout)
-            else:
-                logger.warning("stdout: %s",stdout)
+            logger.info("stdout: %s",stdout)
         if stderr.strip():
             if allow_stderr:
                 logger.info("stderr: %s",stderr)
