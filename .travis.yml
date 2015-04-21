@@ -2,19 +2,19 @@ language: php
 
 matrix:
   include:
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_reshareDir
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_scrapeLogFile
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_shareDir
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_shareFile
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_shareGroup
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_sharePermissions
-    - php: 5.5
+    - php: 5.4
       env: TEST_NAME=oc-tests/test_uploadFiles
   allow_failures:
     - env: TEST_NAME=oc-tests/test_shareGroup
