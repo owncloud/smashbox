@@ -124,6 +124,11 @@ def uploader (step):
     time_string = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
     logger.info ('time before sync start is %s' % time_string)
 
+    step (4, 'Sync and validate files')
+
+    time_string = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    logger.info ('time before sync start is %s' % time_string)
+
     run_ocsync(d,user_num=uploader_num)
 
     time_string = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
@@ -147,9 +152,6 @@ def mover (step):
     sleep_seconds = random.randint(0,5)
     logger.info ("Mover sleeping %d seconds" % sleep_seconds)
     time.sleep (sleep_seconds)
-
-#    rename directory
-#    rename file
 
     step (5, 'Mover final step')
 
