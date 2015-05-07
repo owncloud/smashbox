@@ -205,14 +205,15 @@ def owner_worker(step):
     createfile(os.path.join(d, SHARED_DIR_NAME, 'delete_this_dir', 'stuff.dat'),'0',count=1000,bs=1)
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d, user_num=1)
     list_files(d)
 
     step (4, 'Shares folder with recipient')
 
     user1 = "%s%i"%(config.oc_account_name, 1)
     user2 = "%s%i"%(config.oc_account_name, 2)
-    share_file_with_user(SHARED_DIR_NAME, user1, user2, perms = perms) 
+    kwargs = {'perms': perms}
+    share_file_with_user(SHARED_DIR_NAME, user1, user2, **kwargs)
 
     step (6, 'Final')
 
@@ -223,6 +224,10 @@ def recipient_worker(step):
 
     step (5, 'Check permission enforcement for every operation')
 
+    list_files(d)
+    run_ocsync(d, user_num=2)
+    list_files(d)
+
     oc = get_oc_api()
     user2 = "%s%i" % (config.oc_account_name, 2)
     oc.login(user2, config.oc_account_password)
@@ -230,7 +235,9 @@ def recipient_worker(step):
     perms = permission_matrix['permission']
     operations_test = OperationsTest(oc, d, SHARED_DIR_NAME)
 
-    error_check(oc.file_info(SHARED_DIR_NAME) is not None, 'Recipient did not receive the shared folder')
+    sharedDir = os.path.join(d,SHARED_DIR_NAME)
+    logger.info ('Checking that %s is present in local directory for recipient_worker', sharedDir)
+    expect_exists(sharedDir)
 
     for operation in ALL_OPERATIONS:
         # call the matching operation method
