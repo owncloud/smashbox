@@ -214,7 +214,6 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
         webdav_endpoint = config.oc_webdav_endpoint
 
     remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
-
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
@@ -263,11 +262,16 @@ def webdav_propfind_ls(path):
 def webdav_delete(path):
     runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
-def webdav_mkcol(path,silent=False):
+def webdav_mkcol(path,silent=False,user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path,user_num=user_num),out))
+
+def webdav_upload (file_to_upload, remote_dir, remote_filename, user_number):
+
+    url = "%s/%s" % (oc_webdav_url(remote_folder=remote_dir, user_num=user_number),remote_filename)
+    runcmd('curl -k %s -T %s %s ' % (config.get('curl_opts',''),file_to_upload, url))
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
@@ -337,9 +341,10 @@ def list_files(path,recursive=False):
 
 # ## DATA FILES AND VERSIONS
 
-def createfile(fn,c,count,bs):
+def createfile(fn,c,count,bs,log_info=True):
     # this replaces the dd as 1) more portable, 2) not prone to problems with escaping funny filenames in shell commands
-    logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
+    if log_info:
+        logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs
     of = file(fn,'w')
     for i in range(count):
