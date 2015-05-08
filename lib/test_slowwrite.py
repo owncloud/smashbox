@@ -62,6 +62,7 @@ def writer(step):
 
     # cleanup all local files for the test
     reset_rundir()
+    reset_server_log_file()
 
     step(1,'Preparation')
     d = make_workdir('writer') # bother writer and synchronizer share the same workdir
@@ -80,6 +81,10 @@ def synchronizer(step):
     sleep(slowWrite*2)
     d = make_workdir('writer') # bother writer and synchronizer share the same workdir
     run_ocsync(d)
+
+    step (4, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
 
     
 @add_worker

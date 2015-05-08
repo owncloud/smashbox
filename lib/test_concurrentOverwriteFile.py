@@ -26,6 +26,7 @@ def worker0(step):
     
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
 
     #versions = get_md5_versions_on_server('test.BIG')    
     
@@ -64,6 +65,11 @@ def worker0(step):
     #run_ocsync(d)
     #step(5)
     logger.info('output %s',d)
+
+    step (6, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
+
 
 
 @add_worker

@@ -24,6 +24,7 @@ def uploader(step):
 
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
     
     step(1,'Preparation')
     d = make_workdir()
@@ -40,6 +41,11 @@ def uploader(step):
     logger.info('Step 2 ends here...')
 
     step(3,None)
+
+    step (4, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
+
     return
 
 

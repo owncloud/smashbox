@@ -46,6 +46,7 @@ def ping(step):
     
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
 
     shared = reflection.getSharedObject()
 
@@ -85,6 +86,11 @@ def ping(step):
     step(90, "Verification if files moved at all")
 
     error_check( len(glob.glob(os.path.join(d,'*_conflict-*-*'))) == 0, "Conflicts found!")
+
+    step (91, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
+
 
 @add_worker
 def pong(step):
