@@ -20,32 +20,12 @@ env:
       ENCRYPTION=0
     - TEST_NAME=oc-tests/test_scrapeLogFile
       ENCRYPTION=0
-    - TEST_NAME=oc-tests/test_shareDir
-      ENCRYPTION=0
-    - TEST_NAME=oc-tests/test_shareFile
-      ENCRYPTION=0
-    - TEST_NAME=oc-tests/test_shareGroup
-      ENCRYPTION=0
-    - TEST_NAME=oc-tests/test_sharePermissions
-      ENCRYPTION=0
-    - TEST_NAME=oc-tests/test_uploadFiles
-      ENCRYPTION=0
 
 
     # Without encryption
     - TEST_NAME=oc-tests/test_reshareDir
       ENCRYPTION=1
     - TEST_NAME=oc-tests/test_scrapeLogFile
-      ENCRYPTION=1
-    - TEST_NAME=oc-tests/test_shareDir
-      ENCRYPTION=1
-    - TEST_NAME=oc-tests/test_shareFile
-      ENCRYPTION=1
-    - TEST_NAME=oc-tests/test_shareGroup
-      ENCRYPTION=1
-    - TEST_NAME=oc-tests/test_sharePermissions
-      ENCRYPTION=1
-    - TEST_NAME=oc-tests/test_uploadFiles
       ENCRYPTION=1
 
 matrix:
