@@ -2,24 +2,42 @@ language: php
 
 matrix:
   include:
-    - env: TEST_NAME=oc-tests/test_reshareDir;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_scrapeLogFile;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_shareDir;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_shareFile;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_shareGroup;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_sharePermissions;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_uploadFiles;ENCRYPTION=0
-    - env: TEST_NAME=oc-tests/test_reshareDir;ENCRYPTION=1
-    - env: TEST_NAME=oc-tests/test_scrapeLogFile;ENCRYPTION=1
-    - env: TEST_NAME=oc-tests/test_shareDir;ENCRYPTION=1
-    - env: TEST_NAME=oc-tests/test_shareFile;ENCRYPTION=1
-    - env: TEST_NAME=oc-tests/test_shareGroup;ENCRYPTION=1
-    - env: TEST_NAME=oc-tests/test_sharePermissions;ENCRYPTION=1
-    - env: TEST_NAME=oc-tests/test_uploadFiles;ENCRYPTION=1
+    # Without encryption
+    - env: TEST_NAME=oc-tests/test_reshareDir
+           ENCRYPTION=0
+    - env: TEST_NAME=oc-tests/test_scrapeLogFile
+           ENCRYPTION=0
+    - env: TEST_NAME=oc-tests/test_shareDir
+           ENCRYPTION=0
+    - env: TEST_NAME=oc-tests/test_shareFile
+           ENCRYPTION=0
+    - env: TEST_NAME=oc-tests/test_shareGroup
+           ENCRYPTION=0
+    - env: TEST_NAME=oc-tests/test_sharePermissions
+           ENCRYPTION=0
+    - env: TEST_NAME=oc-tests/test_uploadFiles
+           ENCRYPTION=0
+
+    # With encryption
+    - env: TEST_NAME=oc-tests/test_reshareDir
+           ENCRYPTION=1
+    - env: TEST_NAME=oc-tests/test_scrapeLogFile
+           ENCRYPTION=1
+    - env: TEST_NAME=oc-tests/test_shareDir
+           ENCRYPTION=1
+    - env: TEST_NAME=oc-tests/test_shareFile
+           ENCRYPTION=1
+    - env: TEST_NAME=oc-tests/test_shareGroup
+           ENCRYPTION=1
+    - env: TEST_NAME=oc-tests/test_sharePermissions
+           ENCRYPTION=1
+    - env: TEST_NAME=oc-tests/test_uploadFiles
+           ENCRYPTION=1
 
   allow_failures:
     - env: TEST_NAME=oc-tests/test_shareGroup
     - env: TEST_NAME=oc-tests/test_sharePermissions
+    - env: ENCRYPTION=1
   fast_finish: true
 
 branches:
