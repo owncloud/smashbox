@@ -2,7 +2,7 @@ language: php
 
 php:
   - 5.4
-  - 5.5
+  #- 5.5
 
 branches:
   only:
@@ -18,20 +18,18 @@ env:
     # Without encryption
     - TEST_NAME=oc-tests/test_reshareDir
       ENCRYPTION=0
-    - TEST_NAME=oc-tests/test_scrapeLogFile
-      ENCRYPTION=0
+    #- TEST_NAME=oc-tests/test_scrapeLogFile
+    #  ENCRYPTION=0
 
 
     # Without encryption
-    - TEST_NAME=oc-tests/test_reshareDir
-      ENCRYPTION=1
-    - TEST_NAME=oc-tests/test_scrapeLogFile
-      ENCRYPTION=1
+    #- TEST_NAME=oc-tests/test_reshareDir
+    #  ENCRYPTION=1
+    #- TEST_NAME=oc-tests/test_scrapeLogFile
+    #  ENCRYPTION=1
 
 matrix:
   allow_failures:
-    - env: TEST_NAME=oc-tests/test_shareGroup
-    - env: TEST_NAME=oc-tests/test_sharePermissions
     - env: ENCRYPTION=1
   fast_finish: true
 
@@ -69,7 +67,7 @@ before_install:
 
   # Install python, pycoclient and client
   #######################################
-  - sudo pip install requests
+  - sudo pip install requests unittest-data-provider
   - git clone https://github.com/owncloud/pyocclient.git --depth 1 src/pyocclient
   - export PYTHONPATH=./src/pyocclient
   - sudo apt-get install owncloud-client
@@ -84,6 +82,7 @@ before_install:
 script:
 
   # Run smashbox tests
+  - $PYTHONPATH
   - bin/smash lib/$TEST_NAME.py
 
 after_script:
