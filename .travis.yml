@@ -58,7 +58,8 @@ before_install:
   - ./occ status
   - ./occ app:list
   - cd apps/$APP_NAME
-  - bash ./travis/setup-webserver.sh
+  #- bash ./travis/setup-nginx.sh
+  - bash ./travis/setup-apache2.sh
 
   # Test the status.php site
   - wget http://localhost/core/status.php -O status.php.txt
@@ -67,7 +68,7 @@ before_install:
 
   # Install python, pycoclient and client
   #######################################
-  - sudo pip install requests unittest-data-provider
+  - sudo pip install requests
   - git clone https://github.com/owncloud/pyocclient.git --depth 1 src/pyocclient
   - export PYTHONPATH=./src/pyocclient
   - sudo apt-get install owncloud-client
