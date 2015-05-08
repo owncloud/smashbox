@@ -81,8 +81,12 @@ before_install:
 
 script:
 
+  # Test the status.php site
+  - wget http://localhost/core/index.php -O index.php.txt
+  - echo "\n" >> index.php.txt # Append something for the new line that is missing
+  - cat index.php.txt
+
   # Run smashbox tests
-  - $PYTHONPATH
   - bin/smash lib/$TEST_NAME.py
 
 after_script:

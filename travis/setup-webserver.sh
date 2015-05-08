@@ -67,7 +67,6 @@ fi
 # nginx
 echo "
 	server {
-		listen	80;
 		root	$PHPBB_ROOT_PATH/;
 		index	index.php index.html;
 
