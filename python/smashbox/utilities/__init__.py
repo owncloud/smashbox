@@ -542,6 +542,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
+    logger.error('Using domain %s for pyocclient' % url)
     oc_api = owncloud.Client(url, verify_certs=False)
     return oc_api
 
