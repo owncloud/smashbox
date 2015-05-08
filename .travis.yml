@@ -4,8 +4,17 @@ php:
   - 5.4
   - 5.5
 
-matrix:
-  include:
+branches:
+  only:
+    - master
+    - /^stable\d*$/
+
+env:
+  global:
+    - CORE_BRANCH=master
+    - APP_NAME=smashbox
+    - DB=sqlite
+  matrix:
     # Without encryption
     - env: TEST_NAME=oc-tests/test_reshareDir
            ENCRYPTION=0
@@ -22,7 +31,8 @@ matrix:
     - env: TEST_NAME=oc-tests/test_uploadFiles
            ENCRYPTION=0
 
-    # With encryption
+
+    # Without encryption
     - env: TEST_NAME=oc-tests/test_reshareDir
            ENCRYPTION=1
     - env: TEST_NAME=oc-tests/test_scrapeLogFile
@@ -38,22 +48,13 @@ matrix:
     - env: TEST_NAME=oc-tests/test_uploadFiles
            ENCRYPTION=1
 
+matrix:
+  include:
   allow_failures:
     - env: TEST_NAME=oc-tests/test_shareGroup
     - env: TEST_NAME=oc-tests/test_sharePermissions
     - env: ENCRYPTION=1
   fast_finish: true
-
-branches:
-  only:
-    - master
-    - /^stable\d*$/
-
-env:
-  global:
-    - CORE_BRANCH=master
-    - APP_NAME=smashbox
-    - DB=sqlite
 
 services:
   - redis-server
