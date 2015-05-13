@@ -1,4 +1,5 @@
-from smashbox.utilities import * 
+from smashbox.utilities import *
+from smashbox.utilities.hash_files import get_files
 from smashbox.utilities.hash_files import count_files
 
 import os
@@ -107,7 +108,7 @@ def creator(step):
             filenames.append(nn)
             createfile(os.path.join(d,nn),'1',count=filesizeKB,bs=1000)
 
-    files_1 = os.listdir(d)
+    files_1 = get_files(d)
     N = count_files(d)
 
     shared = reflection.getSharedObject()
@@ -120,10 +121,13 @@ def creator(step):
         run_ocsync(d)
         error_check(count_files(d) == N, "some files lost!")
 
-    files_2 = os.listdir(d)
+    files_2 = get_files(d)
 
     for fn in set(files_1)-set(files_2):
         error_check(False, "the file has disappeared: %s"%repr(fn))
+
+    for fn in set(files_2)-set(files_1):
+        error_check(False, "the file has appeared: %s" % repr(fn))
 
     step (3, 'Validate server log file is clean')
     d = make_workdir()
