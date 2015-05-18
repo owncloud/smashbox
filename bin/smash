@@ -115,6 +115,9 @@ def main():
    if config.oc_server.strip() in ['localhost', '']:
        import socket
        config.oc_server = socket.gethostname()
+   if config.oc_server.strip() in ['travis']:
+       import socket
+       config.oc_server = 'localhost'
 
    top_smash = os.path.abspath(os.path.normpath(os.path.dirname(os.path.dirname(sys.argv[0]))))
 
