@@ -90,7 +90,7 @@ def sharer(step):
 
     step (2,'Create workdir')
     d = make_workdir()
-    sharer_num = int(re.search(r'\d+', d).group())
+    sharer_num = get_user_number_from_work_directory(d)
 
     step (3,'Create initial test directory')
 
@@ -133,7 +133,7 @@ def shareeOne(step):
 
     step (2, 'Sharee One creates workdir')
     d = make_workdir()
-    shareeOne_num = int(re.search(r'\d+', d).group())
+    shareeOne_num = get_user_number_from_work_directory(d)
     max_user_num = shareeOne_num * 3
 
     step (5,'Sharee One syncs and validates directory exist')
@@ -169,7 +169,7 @@ def shareeTwo(step):
   
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()
-    shareeTwo_num = int(re.search(r'\d+', d).group())
+    shareeTwo_num = get_user_number_from_work_directory(d)
     max_user_num = shareeTwo_num * 3
 
     procName = reflection.getProcessName()
@@ -212,3 +212,20 @@ def checkFilesExist (tmpDir):
         sharedFile = os.path.join(tmpDir, filename)
         error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
 
+
+def get_user_number_from_work_directory(dir):
+    """
+    :param dir: string Path of the directory
+        /home/user/smashdir/test_uploadFiles-150522-111229/shareeTwo01
+    :return: integer User number from the last directory name
+    """
+
+    # Remove the config.rundir from the path before searching for the integer
+    # dir = /home/user/smashdir/test_uploadFiles-150522-111229/shareeTwo01
+    dir = dir[len(config.rundir) + 1:]
+
+    # dir = shareeTwo01
+    user_num = int(re.search(r'\d+', dir).group())
+
+    # user_num = 1
+    return user_num
