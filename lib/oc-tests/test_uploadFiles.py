@@ -30,6 +30,8 @@ Data Providers:
   test_sharePermissions:      Permissions to be applied to the share
   test_numFilesToCreate:      Number of files to create
   test_filesizeKB:            Size of file to create in KB
+  share_sets:                 Number of sharer/shareeOne/shareeTwo groupings to be
+                              used in a test run
 
 
 """
@@ -46,25 +48,28 @@ OCS_PERMISSION_SHARE = 16
 OCS_PERMISSION_ALL = 31
 
 filesizeKB = int(config.get('test_filesizeKB',10))
-sharePermissions = config.get('test_sharePermissions', OCS_PERMISSION_ALL)
-numFilesToCreate = config.get('test_numFilesToCreate', 10)
-share_sets = config.get('share_sets',1)
+sharePermissions = int(config.get('test_sharePermissions', OCS_PERMISSION_ALL))
+numFilesToCreate = int(config.get('test_numFilesToCreate', 10))
+share_sets = int(config.get('share_sets',1))
 
 testsets = [
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
         'test_numFilesToCreate':50,
         'test_filesizeKB':20000,
+        'share_sets': 1,
     },
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
         'test_numFilesToCreate':500,
         'test_filesizeKB':2000,
+        'share_sets': 1,
     },
     {
         'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
         'test_numFilesToCreate':50,
         'test_filesizeKB':20000,
+        'share_sets': 1,
     },
 ]
 
