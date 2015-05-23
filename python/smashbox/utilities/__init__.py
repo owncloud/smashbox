@@ -675,6 +675,10 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
     oc_api = get_oc_api()
     oc_api.login(sharer, config.oc_account_password)
 
+    remote_user = kwargs.get('remote_user', False)
+    if remote_user:
+        sharee = "%s@%s" % (sharee, oc_api.url)
+
     try:
         share_info = oc_api.share_file_with_user(filename, sharee, **kwargs)
         logger.info('share id for file share is %s', str(share_info.share_id))
