@@ -277,7 +277,7 @@ class OperationsTest(object):
             if e.status_code == 403:
                 return not expected_success
 
-            logger.error('Got status code %i', e.status_code)
+            log_response_error(e)
             return False
 
         if not self._file_exists(target_file):
@@ -303,7 +303,7 @@ class OperationsTest(object):
             if e.status_code == 403:
                 return not expected_success
 
-            logger.error('Got status code %i', e.status_code)
+            log_response_error(e)
             return False
 
         if self._file_exists(source_file) or not self._file_exists(target_file):
@@ -311,7 +311,6 @@ class OperationsTest(object):
             return False
 
         return expected_success
-
 
     def rename(self, expected_success = False):
         source_file = os.path.join(self.shared_dir, 'rename_this.dat')
@@ -370,7 +369,7 @@ class OperationsTest(object):
             if e.status_code == 403:
                 return not expected_success
 
-            logger.error('Got status code %i', e.status_code)
+            log_response_error(e)
             return False
 
         if self._file_exists(target):
@@ -397,7 +396,7 @@ class OperationsTest(object):
             if e.status_code == 403:
                 return not expected_success
 
-            logger.error('Got status code %i', e.status_code)
+            log_response_error(e)
             return False
 
         if not self._file_exists(target):
@@ -416,3 +415,31 @@ class OperationsTest(object):
             # unknown error
             raise(e)
 
+
+def log_response_error(response_error):
+    """
+    @type response_error: owncloud.ResponseError
+    """
+
+    message = response_error.get_resource_body()
+
+    if message[:38] == '<?xml version="1.0" encoding="utf-8"?>':
+        import xml.etree.ElementTree as ElementTree
+
+        response_exception = ''
+        response_message = ''
+        response = message[39:]
+
+        root_element = ElementTree.fromstringlist(response)
+        if root_element.tag == '{DAV:}error':
+            for child in root_element:
+                if child.tag == '{http://sabredav.org/ns}exception':
+                    response_exception = child.text
+                if child.tag == '{http://sabredav.org/ns}message':
+                    response_message = child.text
+
+        if response_exception != '':
+            message = 'SabreDAV Exception: %s - Message: %s' % (response_exception, response_message)
+
+    logger.error('Unexpected response: Status code: %i - %s' % (response_error.status_code, message))
+    logger.info('Full Response: %s' % (response_error.get_resource_body()))
