@@ -691,6 +691,48 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
             return -2
 
 
+def list_remote_share(sharee):
+    """ Accepts a remote share
+
+    :param sharee: user who created the original share
+    """
+    logger.info('Listing remote shares for user %s', sharee)
+
+    oc_api = get_oc_api()
+    oc_api.login(sharee, config.oc_account_password)
+    open_remote_shares = oc_api.list_remote_share()
+
+    return open_remote_shares
+
+
+def accept_remote_share(sharee, share_id):
+    """ Accepts a remote share
+
+    :param sharee: user who created the original share
+    :param share_id: id of the share to be accepted
+
+    """
+    logger.info('Accepting share %i for user %s', share_id, sharee)
+
+    oc_api = get_oc_api()
+    oc_api.login(sharee, config.oc_account_password)
+    error_check(oc_api.accept_remote_share(share_id), 'Accepting remote share failed')
+
+
+def decline_remote_share(sharee, share_id):
+    """ Delines a remote share
+
+    :param sharer: user who created the original share
+    :param share_id: id of the share to be declined
+
+    """
+    logger.info('Declining share %i from user %s', share_id, sharee)
+
+    oc_api = get_oc_api()
+    oc_api.login(sharee, config.oc_account_password)
+    error_check(oc_api.decline_remote_share(share_id), 'Accepting remote share failed')
+
+
 def delete_share(sharer, share_id):
     """ Deletes a share
 
