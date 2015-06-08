@@ -23,6 +23,7 @@ def workerA(step):
     #cleanup remote and local test environment - this should be run once by one worker only
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
 
     step(0,'create initial content and sync')
 
@@ -51,7 +52,11 @@ def workerA(step):
     #createfile(os.path.join(syncdir,'touch'),'0',count=1,bs=1)
 
     run_ocsync(syncdir)
-    
+    step (4, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
+
+
 @add_worker 
 def workerB(step):
 

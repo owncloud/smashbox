@@ -58,6 +58,7 @@ def creator(step):
     
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
 
     step(1,'create initial content and sync')
 
@@ -123,6 +124,9 @@ def creator(step):
     for fn in set(files_1)-set(files_2):
         error_check(False, "the file has disappeared: %s"%repr(fn))
 
+    step (3, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
 
 
 @add_worker

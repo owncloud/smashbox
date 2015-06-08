@@ -14,6 +14,11 @@ nfiles = int(config.get('nplustwo_nfiles',10))
 def setup(step):
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
+
+    step (4, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
 
 def adder(step):
 

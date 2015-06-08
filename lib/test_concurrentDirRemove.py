@@ -40,6 +40,7 @@ from smashbox.utilities.hash_files import *
 def creator(step):
     reset_owncloud_account()
     reset_rundir()
+    reset_server_log_file()
 
     step(1,'upload empty subdirectory')
     d = make_workdir()
@@ -50,6 +51,10 @@ def creator(step):
     step(5,'final check')
     run_ocsync(d)
     final_check(d)
+
+    step (6, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
 
     
 @add_worker

@@ -46,6 +46,7 @@ def worker0(step):
 
     # cleanup all local files for the test
     reset_rundir()
+    reset_server_log_file()
 
     step(1,'Preparation')
     d = make_workdir()
@@ -68,6 +69,11 @@ def worker0(step):
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
     logger.info('SUCCESS: %d files found',k1)
+
+    step (4, 'Validate server log file is clean')
+    d = make_workdir()
+    scrape_log_file(d)
+
         
 @add_worker
 def worker1(step):
