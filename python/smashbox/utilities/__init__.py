@@ -10,7 +10,7 @@ import time
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
-    return int(20*1024*1024*factor) # 20MB as of client 1.7 
+    return int(20*1024*1024*factor) # 20MB as of client 1.7
 
 
 ######## TEST SETUP AND PREPARATION
@@ -47,12 +47,12 @@ def finalize_test():
 ######### HELPERS
 
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
-    """ 
+    """
     Prepare the test account on the owncloud server (remote state). Run this once at the beginning of the test.
 
     The reset_procedure defines what actually happens. If not set then the config default oc_account_reset_procedure
     applies.
-    
+
     Normally the account is deleted and recreated ('delete')
 
     If reset_procedure is set to 'keep' than the account is not deleted, so the state from the previous run is kept.
@@ -83,7 +83,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
 
     if reset_procedure == 'webdav_delete':
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
-        webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
+        webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661)
 
     # if create if does not exist (for keep or webdav_delete options)
     webdav_mkcol('/')
@@ -92,7 +92,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
 def reset_rundir(reset_procedure=None):
     """ Prepare the run directory for the current test (local state). Run this once at the beginning of the test.
 
-    The reset_procedure defines what actually happens. If not set then the config default rundir_reset_procedure 
+    The reset_procedure defines what actually happens. If not set then the config default rundir_reset_procedure
     applies.
 
     Normally the run directory is deleted ('delete'). To keep the local run directory intact specify "keep".
@@ -113,8 +113,8 @@ def reset_rundir(reset_procedure=None):
 
 
 def make_workdir(name=None):
-    """ Create a worker directory in the current run directory for the test (by default the name is derived from 
-    the worker's name). 
+    """ Create a worker directory in the current run directory for the test (by default the name is derived from
+    the worker's name).
     """
     from smashbox.utilities import reflection
 
@@ -330,6 +330,46 @@ def webdav_mkcol(path, silent=False, user_num=None):
         out = "> /dev/null 2>&1"
     runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
 
+def pyocaction(username, password, async, method, *args, **kwargs):
+    """
+    Run an action using the pyocclient. This method will create an ownCloud client and run
+    the method. A new client will be created each time.
+
+    :param username: username for the client (for authentication purposes)
+    :param password: password for the client (for authentication purposes)
+    :param async: run the method async? True = async, False = sync
+    :param method: the name of the method to be run from the owncloud client (check pyocclient
+    Client object to know what methods you can use
+    :param *args: arguments that will be passed to the method
+    :param **kwargs: arguments that will be passed to the method. The extra keyword
+    'pyocactiondebug' will enable debug in the Client object but won't be passed to the method
+
+    :return: a Thread object if the async param is set to True, nothig if is set to False.
+
+    examples:
+    `pyocaction(user, pass, False, 'put_file_contents', '/path/to/file', 'file content')`
+    `thread = pyocaction(user, pass, True, 'get_file', '/bigfile')`
+
+    """
+    import owncloud
+    oc_protocol = 'https' if config.oc_ssl_enabled else 'http'
+    oc_url = oc_protocol + '://' + config.oc_server + '/' + config.oc_root
+    if kwargs.get('pyocactiondebug'):
+        client = owncloud.Client(oc_url, debug=True)
+        del kwargs['pyocactiondebug']
+    else:
+        client = owncloud.Client(oc_url)
+    client.login(username, password)
+
+    caller = getattr(client, method)
+    if async:
+        import threading
+        thread = threading.Thread(target=caller, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    else:
+        caller(*args, **kwargs)
+
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
@@ -475,12 +515,12 @@ def hexdump(fn):
 
 
 def list_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x
     runcmd(cmd)
 
 
 def hexdump_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x
     runcmd(cmd)
 
 
@@ -517,7 +557,7 @@ def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
 
-    if not expr: 
+    if not expr:
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
         message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
