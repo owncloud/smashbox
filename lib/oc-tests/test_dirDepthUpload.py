@@ -22,8 +22,7 @@ Data Providers:
   test_numFilesToCreate:      Number of files to create
   test_filesizeKB:            Size of file to create in KB
   dir_depth:                  How deep the directory structure should go
-  style:                      Defines if the directory layout is flat or hierarchial
-  num_file_rows:              How many rows in the file
+  dir_depth_style:            Defines if the directory layout is flat or hierarchial
 
 
 """
@@ -38,42 +37,37 @@ filesizeKB = int(config.get('test_filesizeKB',10))
 numFilesToCreate = config.get('test_numFilesToCreate', 10)
 dir_depth = config.get ('dir_depth',5)
 num_users = config.get ('oc_number_test_users', 3)
-num_file_rows = config.get ('file_row_count', 100)
 style = config.get ('dir_depth_style', 'flat')
 test_with_mover = True
 
 testsets = [
     {
-        'num_file_rows':1000,
         'num_users':10,
         'dir_depth':5,
         'test_numFilesToCreate':500,
         'test_filesizeKB':2,
-        'style': 'flat',
+        'dir_depth_style': 'flat',
     },
     {
-        'num_file_rows':1000,
         'num_users':10,
         'dir_depth':5,
         'test_numFilesToCreate':50,
         'test_filesizeKB':200,
-        'style': 'complex',
+        'dir_depth_style': 'complex',
     },
     {
-        'num_file_rows':1000,
         'num_users':10,
         'dir_depth':10,
         'test_numFilesToCreate':50,
         'test_filesizeKB':2000,
-        'sytle': 'flat'
+        'dir_depth_style': 'flat'
     },
     {
-        'num_file_rows':1000,
         'num_users':10,
         'dir_depth':10,
         'test_numFilesToCreate':50,
         'test_filesizeKB':2000,
-        'sytle': 'complex'
+        'dir_depth_style': 'complex'
     },
 ]
 
