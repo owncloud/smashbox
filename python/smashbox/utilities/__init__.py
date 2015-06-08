@@ -344,7 +344,9 @@ def pyocaction(username, password, async, method, *args, **kwargs):
     :param **kwargs: arguments that will be passed to the method. The extra keyword
     'pyocactiondebug' will enable debug in the Client object but won't be passed to the method
 
-    :return: a Thread object if the async param is set to True, nothig if is set to False.
+    :return: a tuple containing a Thread object and a Queue (to get the result of the called
+    method once it finish) if the async param is set to True, and the result of the method
+     if is set to False.
 
     examples:
     `pyocaction(user, pass, False, 'put_file_contents', '/path/to/file', 'file content')`
@@ -364,11 +366,18 @@ def pyocaction(username, password, async, method, *args, **kwargs):
     caller = getattr(client, method)
     if async:
         import threading
-        thread = threading.Thread(target=caller, args=args, kwargs=kwargs)
+        import Queue
+
+        def caller_wrapper(method, q, *args, **kwargs):
+            q.put(method(*args, **kwargs))
+
+        result_queue = Queue.Queue()
+        caller_wrapper_args = (caller, result_queue,) + args
+        thread = threading.Thread(target=caller_wrapper, args=caller_wrapper_args, kwargs=kwargs)
         thread.start()
-        return thread
+        return (thread, result_queue)
     else:
-        caller(*args, **kwargs)
+        return caller(*args, **kwargs)
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
