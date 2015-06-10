@@ -57,6 +57,17 @@ def check_filesize(path, size):
 def check_first_exists_second_not(path1, path2):
     return check_file_exists(path1) and check_file_not_exists(path2)
 
+def check_all_files_not_exists(*args):
+    gen = (check_file_not_exists(i) for i in args)
+    return all(gen)
+
+def check_all_files_exists(*args):
+    gen = (check_file_exists(i) for i in args)
+    return all(gen)
+
+def check_first_list_exists_second_list_not(pathlist1, pathlist2):
+    return check_all_files_exists(*pathlist1) and check_all_files_not_exists(*pathlist2)
+
 testsets = [
         { 'action_method': 'put_file_contents',
           'action_args': ('/folder/bigfile.dat', '123'*50),
@@ -73,12 +84,40 @@ testsets = [
         { 'action_method': 'file_info',
           'action_args': ('/folder/bigfile.dat',),
           'action_kwargs': {'pyocactiondebug' : True},
+          'extra_check': None,
+          'extra_check_params': ()
         },
         { 'action_method': 'move',
           'action_args': ('/folder/bigfile.dat', '/folder/bigrenamed.dat'),
           'action_kwargs': {'pyocactiondebug' : True},
           'extra_check': 'check_first_exists_second_not',
           'extra_check_params': ('/folder/bigrenamed.dat', '/folder/bigfile.dat')
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder/bigfile.dat', '/folder2/bigfile.dat'),
+          'action_kwargs': {'pyocactiondebug' : True},
+          'extra_check': 'check_first_exists_second_not',
+          'extra_check_params': ('/folder2/bigfile.dat', '/folder/bigfile.dat')
+        },
+        { 'action_method': 'delete',
+          'action_args': ('/folder',),
+          'action_kwargs': {'pyocactiondebug' : True},
+          'extra_check': 'check_all_files_not_exists',
+          'extra_check_params': ('/folder/bigfile.dat', '/folder')
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder', '/folder-renamed'),
+          'action_kwargs': {'pyocactiondebug' : True},
+          'extra_check': 'check_first_list_exists_second_list_not',
+          'extra_check_params': (('/folder-renamed', '/folder-renamed/bigfile.dat'),
+                                    ('/folder', '/folder/bigfile.dat'))
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder', '/folder2/folder'),
+          'action_kwargs': {'pyocactiondebug' : True},
+          'extra_check': 'check_first_list_exists_second_list_not',
+          'extra_check_params': (('/folder2', '/folder2/folder', '/folder2/folder/bigfile.dat'),
+                                    ('/folder', '/folder/bigfile.dat'))
         },
 ]
 
@@ -97,6 +136,7 @@ def downloader(step):
     # sync a big file
     target_filename = os.path.join(d, 'folder', 'bigfile.dat')
     mkdir(os.path.join(d, 'folder'))
+    mkdir(os.path.join(d, 'folder2'))
     createfile(target_filename,'10',count=1000,bs=10000)
     sum5 = md5sum(target_filename)
 
