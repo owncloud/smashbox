@@ -1,3 +1,26 @@
+__doc__ = """
+Test locking feature. The test will download a file big enough and perform an operation
+while the download is running. Each test set will run a different operation.
+
+Test sets:
+* download + overwrite
+* download + delete
+* download + info (propfind)
+* download + move
+
++-------------+---------------------------+----------------+
+| step number | downloader                | doer           |
++-------------+---------------------------+----------------+
+| 1           | upload big file           |                |
++-------------+---------------------------+----------------+
+| 2           | download big file (async) |                |
++-------------+---------------------------+----------------+
+| 3           |                           | perform action |
++-------------+---------------------------+----------------+
+| 4           | check result and cleanup  | check result   |
++-------------+---------------------------+----------------+
+
+"""
 import time
 import os
 import tempfile
@@ -56,7 +79,7 @@ testsets = [
           'action_kwargs': {'pyocactiondebug' : True},
           'extra_check': 'check_first_exists_second_not',
           'extra_check_params': ('/folder/bigrenamed.dat', '/folder/bigfile.dat')
-        }
+        },
 ]
 
 @add_worker
@@ -86,7 +109,7 @@ def downloader(step):
     # download the file asynchronously
     download_thread = pyocaction(sconf.oc_account_name, sconf.oc_account_password, True, 'get_file', '/folder/bigfile.dat', tmpfile[1], pyocactiondebug=True)
 
-    step(3, 'wait and cleanup')
+    step(4, 'check result and cleanup')
 
     # wait until the download finish
     download_thread[0].join()
@@ -108,6 +131,7 @@ def doer(step):
 
     # perform the action
     result = pyocaction(sconf.oc_account_name, sconf.oc_account_password, False, method, *args, **kwargs)
+    step(4, 'check results')
     # check successful result
     logger.info('check %s method finished correctly' % method)
     error_check(result, method + ' action didn\'t finish correctly')
