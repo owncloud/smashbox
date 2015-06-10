@@ -6,7 +6,11 @@ Test sets:
 * download + overwrite
 * download + delete
 * download + info (propfind)
+* download + rename
 * download + move
+* download + delete parent folder
+* download + rename folder
+* download + move folder
 
 +-------------+---------------------------+----------------+
 | step number | downloader                | doer           |
