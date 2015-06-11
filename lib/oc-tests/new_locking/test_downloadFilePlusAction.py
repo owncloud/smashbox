@@ -27,6 +27,7 @@ Test sets:
 """
 import time
 import os
+import re
 import tempfile
 import owncloud
 from smashbox.utilities import *
@@ -71,6 +72,13 @@ def check_all_files_exists(*args):
 
 def check_first_list_exists_second_list_not(pathlist1, pathlist2):
     return check_all_files_exists(*pathlist1) and check_all_files_not_exists(*pathlist2)
+
+def parse_worker_number(worker_name):
+    match = re.search(r'(\d+)$', worker_name)
+    if match is not None:
+        return int(match.group())
+    else:
+        return None
 
 testsets = [
         { 'action_method': 'put_file_contents',
@@ -140,13 +148,15 @@ def setup(step):
     reset_rundir()
 
 def downloader(step):
+    process_number = parse_worker_number(reflection.getProcessName())
+    user_account = sconf.oc_account_name if process_number <= 0 else '%s%i' % (sconf.oc_account_name, process_number)
 
     step(2, 'create big file')
 
     d = make_workdir()
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d, user_num=None if process_number <= 0 else process_number)
 
     # sync a big file
     target_filename = os.path.join(d, 'folder', 'bigfile.dat')
@@ -155,14 +165,14 @@ def downloader(step):
     createfile(target_filename,'10',count=1000,bs=10000)
     sum5 = md5sum(target_filename)
 
-    run_ocsync(d)
+    run_ocsync(d, user_num=None if process_number <= 0 else process_number)
     list_files(d)
 
     step(3, 'download file async')
 
     tmpfile = tempfile.mkstemp()
     # download the file asynchronously
-    download_thread = pyocaction(sconf.oc_account_name, sconf.oc_account_password, True, 'get_file', '/folder/bigfile.dat', tmpfile[1], pyocactiondebug=True)
+    download_thread = pyocaction(user_account, sconf.oc_account_password, True, 'get_file', '/folder/bigfile.dat', tmpfile[1], pyocactiondebug=True)
 
     step(5, 'check result and cleanup')
 
@@ -181,11 +191,14 @@ def doer(step):
     args = config.get('action_args', ('/folder/bigfile.dat', '123'*50))
     kwargs = config.get('action_kwargs', {})
 
+    process_number = parse_worker_number(reflection.getProcessName())
+    user_account = sconf.oc_account_name if process_number <= 0 else '%s%i' % (sconf.oc_account_name, process_number)
+
     step(4, 'action over file')
 
     # perform the action
     try:
-        result = pyocaction(sconf.oc_account_name, sconf.oc_account_password, False, method, *args, **kwargs)
+        result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
 
         step(4, 'check results')
         # check successful result
