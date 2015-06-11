@@ -160,7 +160,7 @@ def downloader(step):
 
     sum5_2 = md5sum(tmpfile[1])
     # check both md5 matches
-    logger.info('checking md5sum of the downloaded files')
+    logger.debug('checking md5sum of the downloaded files')
     error_check(sum5 == sum5_2, 'uploaded file is different than the downloaded file [%s] - [%s]' % (sum5, sum5_2))
     # remove temporal file
     os.remove(tmpfile[1])
@@ -179,16 +179,17 @@ def doer(step):
 
         step(4, 'check results')
         # check successful result
-        logger.info('check %s method finished correctly' % method)
+        logger.debug('check %s method finished correctly' % method)
         error_check(result, method + ' action didn\'t finish correctly')
 
         # perform extra check
         check = config.get('extra_check', None)
         if check:
-            logger.info('additional check %s' % check)
+            logger.debug('additional check %s' % check)
             check_params = config.get('extra_check_params', ())
             error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
     except owncloud.ResponseError as e:
+        logger.debug('%s action failed. Checking the status to know if the file is locked', % (method,))
         error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
 
 
