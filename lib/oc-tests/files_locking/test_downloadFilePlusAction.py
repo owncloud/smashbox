@@ -174,16 +174,21 @@ def doer(step):
     step(3, 'action over file')
 
     # perform the action
-    result = pyocaction(sconf.oc_account_name, sconf.oc_account_password, False, method, *args, **kwargs)
-    step(4, 'check results')
-    # check successful result
-    logger.info('check %s method finished correctly' % method)
-    error_check(result, method + ' action didn\'t finish correctly')
+    try:
+        result = pyocaction(sconf.oc_account_name, sconf.oc_account_password, False, method, *args, **kwargs)
 
-    # perform extra check
-    check = config.get('extra_check', None)
-    if check:
-        logger.info('additional check %s' % check)
-        check_params = config.get('extra_check_params', ())
-        error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
+        step(4, 'check results')
+        # check successful result
+        logger.info('check %s method finished correctly' % method)
+        error_check(result, method + ' action didn\'t finish correctly')
+
+        # perform extra check
+        check = config.get('extra_check', None)
+        if check:
+            logger.info('additional check %s' % check)
+            check_params = config.get('extra_check_params', ())
+            error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
+    except owncloud.ResponseError as e:
+        error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
+
 
