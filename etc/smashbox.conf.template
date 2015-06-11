@@ -131,3 +131,13 @@ reset_server_log = False
 #
 # scp port to be used in scp commands, used primarily when copying over the server log file
 scp_port=22
+
+#
+# External storage mount point and db infor
+ext_storage_mount = ""
+db_host = "172.18.5.157"
+db_user = "root"
+db_password = "Password01"
+db_schema = "owncloud"
+
+
