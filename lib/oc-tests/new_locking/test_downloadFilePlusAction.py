@@ -15,13 +15,13 @@ Test sets:
 +-------------+---------------------------+----------------+
 | step number | downloader                | doer           |
 +-------------+---------------------------+----------------+
-| 1           | upload big file           |                |
+| 2           | upload big file           |                |
 +-------------+---------------------------+----------------+
-| 2           | download big file (async) |                |
+| 3           | download big file (async) |                |
 +-------------+---------------------------+----------------+
-| 3           |                           | perform action |
+| 4           |                           | perform action |
 +-------------+---------------------------+----------------+
-| 4           | check result and cleanup  | check result   |
+| 5           | check result and cleanup  | check result   |
 +-------------+---------------------------+----------------+
 
 """
@@ -76,42 +76,49 @@ testsets = [
         { 'action_method': 'put_file_contents',
           'action_args': ('/folder/bigfile.dat', '123'*50),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_filesize',
           'extra_check_params': ('/folder/bigfile.dat', 3*50)
         },
         { 'action_method': 'delete',
           'action_args': ('/folder/bigfile.dat',),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_file_not_exists',
           'extra_check_params': ('/folder/bigfile.dat',)
         },
         { 'action_method': 'file_info',
           'action_args': ('/folder/bigfile.dat',),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': None,
           'extra_check_params': ()
         },
         { 'action_method': 'move',
           'action_args': ('/folder/bigfile.dat', '/folder/bigrenamed.dat'),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_exists_second_not',
           'extra_check_params': ('/folder/bigrenamed.dat', '/folder/bigfile.dat')
         },
         { 'action_method': 'move',
           'action_args': ('/folder/bigfile.dat', '/folder2/bigfile.dat'),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_exists_second_not',
           'extra_check_params': ('/folder2/bigfile.dat', '/folder/bigfile.dat')
         },
         { 'action_method': 'delete',
           'action_args': ('/folder',),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_all_files_not_exists',
           'extra_check_params': ('/folder/bigfile.dat', '/folder')
         },
         { 'action_method': 'move',
           'action_args': ('/folder', '/folder-renamed'),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_list_exists_second_list_not',
           'extra_check_params': (('/folder-renamed', '/folder-renamed/bigfile.dat'),
                                     ('/folder', '/folder/bigfile.dat'))
@@ -119,6 +126,7 @@ testsets = [
         { 'action_method': 'move',
           'action_args': ('/folder', '/folder2/folder'),
           'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_list_exists_second_list_not',
           'extra_check_params': (('/folder2', '/folder2/folder', '/folder2/folder/bigfile.dat'),
                                     ('/folder', '/folder/bigfile.dat'))
@@ -126,11 +134,14 @@ testsets = [
 ]
 
 @add_worker
-def downloader(step):
-    reset_owncloud_account()
+def setup(step):
+    step(1, 'setup')
+    reset_owncloud_account(num_test_users=config.get('accounts', 1))
     reset_rundir()
 
-    step(1, 'create big file')
+def downloader(step):
+
+    step(2, 'create big file')
 
     d = make_workdir()
 
@@ -147,13 +158,13 @@ def downloader(step):
     run_ocsync(d)
     list_files(d)
 
-    step(2, 'download file async')
+    step(3, 'download file async')
 
     tmpfile = tempfile.mkstemp()
     # download the file asynchronously
     download_thread = pyocaction(sconf.oc_account_name, sconf.oc_account_password, True, 'get_file', '/folder/bigfile.dat', tmpfile[1], pyocactiondebug=True)
 
-    step(4, 'check result and cleanup')
+    step(5, 'check result and cleanup')
 
     # wait until the download finish
     download_thread[0].join()
@@ -165,13 +176,12 @@ def downloader(step):
     # remove temporal file
     os.remove(tmpfile[1])
 
-@add_worker
 def doer(step):
     method = config.get('action_method', 'put_file_contents')
     args = config.get('action_args', ('/folder/bigfile.dat', '123'*50))
     kwargs = config.get('action_kwargs', {})
 
-    step(3, 'action over file')
+    step(4, 'action over file')
 
     # perform the action
     try:
@@ -193,3 +203,7 @@ def doer(step):
         error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
 
 
+# add workers
+for i in range(config.get('accounts', 1)):
+    add_worker(downloader, name='downloader_%s' % (i,))
+    add_worker(doer, name='doer_%s' % (i,))
