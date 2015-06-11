@@ -189,7 +189,7 @@ def doer(step):
             check_params = config.get('extra_check_params', ())
             error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
     except owncloud.ResponseError as e:
-        logger.debug('%s action failed. Checking the status to know if the file is locked', % (method,))
+        logger.debug('%s action failed. Checking the status to know if the file is locked' % (method,))
         error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
 
 
