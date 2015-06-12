@@ -18,7 +18,16 @@ testsets = [
           'action_kwargs': {'pyocactiondebug' : True},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_filesize',
-          'extra_check_params': ('/folder/bigfile.dat', 3*50)
+          'extra_check_params': ('/folder/bigfile.dat', 3*50),
+          'overwrite_kwargs' : None,
+        },
+        { 'action_method': 'put_file_contents',
+          'action_args': ('/folder/bigfile.dat', '123'*50),
+          'action_kwargs': {'pyocactiondebug' : True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_filesize',
+          'extra_check_params': ('/folder/bigfile.dat', 3*50),
+          'overwrite_kwargs' : {'chunked' : True, 'chunk_size' : 1024*1024}, #1MB
         },
 ]
 
@@ -56,7 +65,10 @@ def overwriter(step):
     createfile(tmpfile[1], '5', count=1000, bs=10000)
     sum_new = md5sum(tmpfile[1])
 
-    overwrite_thread = pyocaction(user_account, sconf.oc_account_password, True, 'put_file', '/folder/bigfile.dat', tmpfile[1], pyocactiondebug=True)
+    overwrite_kwargs = {'pyocactiondebug' : True}
+    if type(config.get('overwrite_kwargs', None)) is dict:
+        overwrite_kwargs.update(config.get('overwrite_kwargs', None))
+    overwrite_thread = pyocaction(user_account, sconf.oc_account_password, True, 'put_file', '/folder/bigfile.dat', tmpfile[1], **overwrite_kwargs)
 
     step(5, 'check result and cleanup')
 
@@ -72,7 +84,7 @@ def overwriter(step):
     # check both md5 matches
     error_check(get_file_result, 'overwritten file failed to download')
     logger.debug('checking md5sum of the downloaded files')
-    error_check(sum_orig != sum_new, 'original file didn\'t get ovewritten')
+    error_check(sum_orig != sum_new, 'original file didn\'t get overwritten')
     error_check(sum_new == sum_downloaded, 'overwritten file is different than the downloaded file [%s] - [%s]' % (sum_new, sum_downloaded))
 
     # remove temporal files
