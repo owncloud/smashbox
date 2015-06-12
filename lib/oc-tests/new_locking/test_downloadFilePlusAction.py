@@ -33,9 +33,9 @@ import owncloud
 from smashbox.utilities import *
 from smashbox.script import config as sconf
 
-def check_file_exists(path):
+def check_file_exists(username, password, path):
     try:
-        info = pyocaction(sconf.oc_account_name, sconf.oc_account_password, False, 'file_info', path)
+        info = pyocaction(username, password, False, 'file_info', path)
         return False if info is None else True
     except owncloud.ResponseError as e:
         if e.status_code == 404:
@@ -43,12 +43,12 @@ def check_file_exists(path):
         else:
             raise e
 
-def check_file_not_exists(path):
-    return not check_file_exists(path)
+def check_file_not_exists(username, password, path):
+    return not check_file_exists(username, password, path)
 
-def check_filesize(path, size):
+def check_filesize(username, password, path, size):
     try:
-        info = pyocaction(sconf.oc_account_name, sconf.oc_account_password, False, 'file_info', path)
+        info = pyocaction(username, password, False, 'file_info', path)
         if info is None:
             return False
         else:
@@ -59,19 +59,19 @@ def check_filesize(path, size):
         else:
             raise e
 
-def check_first_exists_second_not(path1, path2):
-    return check_file_exists(path1) and check_file_not_exists(path2)
+def check_first_exists_second_not(username, password, path1, path2):
+    return check_file_exists(username, password, path1) and check_file_not_exists(username, password, path2)
 
-def check_all_files_not_exists(*args):
-    gen = (check_file_not_exists(i) for i in args)
+def check_all_files_not_exists(username, password, *args):
+    gen = (check_file_not_exists(username, password, i) for i in args)
     return all(gen)
 
-def check_all_files_exists(*args):
-    gen = (check_file_exists(i) for i in args)
+def check_all_files_exists(username, password, *args):
+    gen = (check_file_exists(username, password, i) for i in args)
     return all(gen)
 
-def check_first_list_exists_second_list_not(pathlist1, pathlist2):
-    return check_all_files_exists(*pathlist1) and check_all_files_not_exists(*pathlist2)
+def check_first_list_exists_second_list_not(username, password, pathlist1, pathlist2):
+    return check_all_files_exists(username, password, *pathlist1) and check_all_files_not_exists(username, password, *pathlist2)
 
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
@@ -218,9 +218,9 @@ def doer(step):
     if check:
         logger.debug('additional check %s' % check)
         check_params = config.get('extra_check_params', ())
-        error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
+        error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
 
 # add workers
-for i in range(config.get('accounts', 1)):
+for i in range(1, config.get('accounts', 1) + 1):
     add_worker(downloader, name='downloader_%s' % (i,))
     add_worker(doer, name='doer_%s' % (i,))
