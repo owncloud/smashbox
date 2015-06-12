@@ -105,53 +105,57 @@ def sharer(step):
 
     step (2, 'Create workdir')
     d = make_workdir()
+    e_dir = "%s/%s" %(d, 'amazon-s3')
+    ext_store_dir = make_workdir (e_dir)
 
     step (3, 'Create initial test files and directories')
 
-    createfile(os.path.join(d,'TEST_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(ext_store_dir,'TEST_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(ext_store_dir,'TEST_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(ext_store_dir,'TEST_FILE_MODIFIED_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
-    shared['md5_sharer'] = md5sum(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'))
+    shared['md5_sharer'] = md5sum(os.path.join(ext_store_dir,'TEST_FILE_MODIFIED_USER_SHARE.dat'))
     logger.info('md5_sharer: %s',shared['md5_sharer'])
 
-    list_files(d)
-    run_ocsync(d, user_num=1)
-    list_files(d)
+    list_files(ext_store_dir)
+    run_ocsync(ext_store_dir, remote_folder='amazon-s3', user_num=1)
+    list_files(ext_store_dir)
 
-#    step (4,'Sharer shares files')
+    step (4,'Sharer shares files')
 
-#    user1 = "%s%i"%(config.oc_account_name, 1)
-#    user2 = "%s%i"%(config.oc_account_name, 2)
+    user1 = "%s%i"%(config.oc_account_name, 1)
+    user2 = "%s%i"%(config.oc_account_name, 2)
 
-#    kwargs = {'perms': sharePermissions}
-#    shared['TEST_FILE_USER_SHARE'] = share_file_with_user ('TEST_FILE_USER_SHARE.dat', user1, user2, **kwargs)
-#    shared['TEST_FILE_USER_RESHARE'] = share_file_with_user ('TEST_FILE_USER_RESHARE.dat', user1, user2, **kwargs)
-#    shared['TEST_FILE_MODIFIED_USER_SHARE'] = share_file_with_user ('TEST_FILE_MODIFIED_USER_SHARE.dat', user1, user2, **kwargs)
-#    shared['sharer.TEST_FILE_MODIFIED_USER_SHARE'] = os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat')
+    kwargs = {'perms': sharePermissions}
+    shared['TEST_FILE_USER_SHARE'] = share_file_with_user ('amazon-s3/TEST_FILE_USER_SHARE.dat', user1, user2, **kwargs)
+    shared['TEST_FILE_USER_RESHARE'] = share_file_with_user ('amazon-s3/TEST_FILE_USER_RESHARE.dat', user1, user2, **kwargs)
+    shared['TEST_FILE_MODIFIED_USER_SHARE'] = share_file_with_user ('amazon-s3/TEST_FILE_MODIFIED_USER_SHARE.dat', user1, user2, **kwargs)
+    shared['sharer.TEST_FILE_MODIFIED_USER_SHARE'] = os.path.join(ext_store_dir,'TEST_FILE_MODIFIED_USER_SHARE.dat')
 
-#    step (7, 'Sharer validates modified file')
-#    run_ocsync(d, user_num=1)
+    step (7, 'Sharer validates modified file')
+    run_ocsync(ext_store_dir, remote_folder='amazon-s3', user_num=1)
 
-#    if not sharePermissions & OCS_PERMISSION_UPDATE:
-#      expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
-#    else:
-#      expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
+    if not sharePermissions & OCS_PERMISSION_UPDATE:
+      expect_not_modified(os.path.join(ext_store_dir,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
+    else:
+      expect_modified(os.path.join(ext_store_dir,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
 
-#    step (10, 'Sharer unshares a file')
-#    delete_share (user1, shared['TEST_FILE_USER_RESHARE'])
+    step (10, 'Sharer unshares a file')
+    delete_share (user1, shared['TEST_FILE_USER_RESHARE'])
 
-#    step (12, 'Sharer deletes file')
+    step (12, 'Sharer deletes file')
 
-#    list_files(d)
-#    remove_file(os.path.join(d,'TEST_FILE_USER_SHARE.dat'))
-#    run_ocsync(d, user_num=1)
-#    list_files(d)
+    list_files(ext_store_dir)
+    remove_file(os.path.join(ext_store_dir,'TEST_FILE_USER_SHARE.dat'))
+    remove_file(os.path.join(ext_store_dir,'TEST_FILE_USER_RESHARE.dat'))
+    remove_file(os.path.join(ext_store_dir,'TEST_FILE_MODIFIED_USER_SHARE.dat'))
+    run_ocsync(ext_store_dir, remote_folder='amazon-s3', user_num=1)
+    list_files(ext_store_dir)
 
     step (14, 'Sharer final step')
 
-#@add_worker
+@add_worker
 def shareeOne(step):
 
     step (2, 'Sharee One creates workdir')
@@ -217,7 +221,7 @@ def shareeOne(step):
 
     step (14, 'Sharee One final step')
 
-#@add_worker
+@add_worker
 def shareeTwo(step):
   
     step (2, 'Sharee Two creates workdir')
@@ -320,11 +324,7 @@ def add_storage_mount (user_name, mount_name):
 
     fn.close()
 
-#    cmd = 'scp -P %d mount.json root@%s:%s/%s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, user_name)
     cmd = 'rsync -a --chown=www-data:www-data --chmod=777 mount.json root@%s:%s/%s/.' % (config.oc_server, config.oc_server_datadirectory, user_name)
     rtn_code = runcmd(cmd)
-
-    print cmd
-    print 'returned %d' % rtn_code
 
 
