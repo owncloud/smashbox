@@ -5,6 +5,19 @@ import owncloud
 from smashbox.utilities import *
 from smashbox.script import config as sconf
 
+def check_filesize(username, password, path, size):
+    try:
+        info = pyocaction(username, password, False, 'file_info', path)
+        if info is None:
+            return False
+        else:
+            return size == info.get_size()
+    except owncloud.ResponseError as e:
+        if e.status_code == 404:
+            return False
+        else:
+            raise e
+
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
     if match is not None:
@@ -21,14 +34,14 @@ testsets = [
           'extra_check_params': ('/folder/bigfile.dat', 3*50),
           'overwrite_kwargs' : None,
         },
-        { 'action_method': 'put_file_contents',
-          'action_args': ('/folder/bigfile.dat', '123'*50),
-          'action_kwargs': {'pyocactiondebug' : True},
-          'accounts': sconf.oc_number_test_users,
-          'extra_check': 'check_filesize',
-          'extra_check_params': ('/folder/bigfile.dat', 3*50),
-          'overwrite_kwargs' : {'chunked' : True, 'chunk_size' : 1024*1024}, #1MB
-        },
+#        { 'action_method': 'put_file_contents',
+#          'action_args': ('/folder/bigfile.dat', '123'*50),
+#          'action_kwargs': {'pyocactiondebug' : True},
+#          'accounts': sconf.oc_number_test_users,
+#          'extra_check': 'check_filesize',
+#          'extra_check_params': ('/folder/bigfile.dat', 3*50),
+#          'overwrite_kwargs' : {'chunked' : True, 'chunk_size' : 1024*1024}, #1MB
+#        },
 ]
 
 @add_worker
@@ -101,26 +114,30 @@ def doer(step):
 
     step(4, 'action over file')
 
+    retry_action = False
     # perform the action
     try:
         result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
-
-        step(4, 'check results')
-        # check successful result
-        logger.debug('check %s method finished correctly' % method)
-        error_check(result, method + ' action didn\'t finish correctly')
-
-        # perform extra check
-        check = config.get('extra_check', None)
-        if check:
-            logger.debug('additional check %s' % check)
-            check_params = config.get('extra_check_params', ())
-            error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
     except owncloud.ResponseError as e:
         logger.debug('%s action failed. Checking the status to know if the file is locked' % (method,))
         error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
+        retry_action = True
+
+    step(6, 'check results')
+
+    if retry_action:
+        result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
+    # check successful result
+    error_check(result, method + ' action didn\'t finish correctly')
+
+    # perform extra check
+    check = config.get('extra_check', None)
+    if check:
+        logger.debug('additional check %s' % check)
+        check_params = config.get('extra_check_params', ())
+        error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
 
 # add workers
-for i in range(config.get('accounts', 1)):
+for i in range(1, config.get('accounts', 1) + 1):
     add_worker(overwriter, name='downloader_%s' % (i,))
     add_worker(doer, name='doer_%s' % (i,))
