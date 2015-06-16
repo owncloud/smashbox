@@ -124,6 +124,14 @@ def creator(step):
     run_ocsync(d)
     list_files(d)
 
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_MODIFIED_NONE.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_MODIFIED_LOSER.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_MODIFIED_WINNER.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_MODIFIED_BOTH.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_DELETED_LOSER.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_DELETED_WINNER.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_DELETED_BOTH.dat')
+
     step(7,'download the repository')
     run_ocsync(d,n=3)
 
@@ -162,6 +170,12 @@ def winner(step):
     logger.info('md5_winner: %s',shared['md5_winner'])
 
     run_ocsync(d)
+
+    expect_server_file_does_not_exist(config.oc_account_name, 'TEST_FILE_DELETED_WINNER.dat')
+    expect_server_file_does_not_exist(config.oc_account_name, 'TEST_FILE_DELETED_BOTH.dat')
+
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_ADDED_WINNER.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_ADDED_BOTH.dat')
 
     step(5,'final sync')
 
@@ -211,6 +225,12 @@ def loser(step):
         remove_file(os.path.join(d,'.csync_journal.db'))
 
     run_ocsync(d,n=3) # conflict file will be synced to the server but it requires more than one sync run
+
+    expect_server_file_does_not_exist(config.oc_account_name, 'TEST_FILE_DELETED_LOSER.dat')
+    expect_server_file_does_not_exist(config.oc_account_name, 'TEST_FILE_DELETED_BOTH.dat')
+
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_ADDED_LOSER.dat')
+    expect_server_file_exists(config.oc_account_name, 'TEST_FILE_ADDED_BOTH.dat')
 
     step(6,'final sync')
     run_ocsync(d)
