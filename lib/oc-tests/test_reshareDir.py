@@ -45,6 +45,7 @@ OCS_PERMISSION_SHARE = 16
 OCS_PERMISSION_ALL = 31
 
 filesizeKB = int(config.get('share_filesizeKB',10))
+dirName = 'localShareDir'
 
 @add_worker
 def setup(step):
@@ -70,9 +71,8 @@ def sharer(step):
 
     step (3, 'Create initial test files and directories')
 
-    procName = reflection.getProcessName()
-    dirName = "%s/%s"%(procName, 'localShareDir')
-    localDir = make_workdir(dirName)
+    localDir = os.path.join(d, dirName)
+    mkdir(localDir)
 
     createfile(os.path.join(localDir,'TEST_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(localDir,'TEST_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
@@ -86,12 +86,17 @@ def sharer(step):
     run_ocsync(d,user_num=1)
     list_files(d)
 
+    user1 = "%s%i"%(config.oc_account_name, 1)
+
+    expect_server_file_exists(user1, dirName, isDir=True)
+    expect_server_file_exists(user1, os.path.join(dirName,'TEST_FILE_USER_SHARE.dat'))
+    expect_server_file_exists(user1, os.path.join(dirName,'TEST_FILE_USER_RESHARE.dat'))
+    expect_server_file_exists(user1, os.path.join(dirName,'TEST_FILE_MODIFIED_USER_SHARE.dat'))
+
     step (4, 'Sharer shares directory')
 
-    user1 = "%s%i"%(config.oc_account_name, 1)
-    user2 = "%s%i"%(config.oc_account_name, 2)
-
     kwargs = {'perms': OCS_PERMISSION_ALL}
+    user2 = "%s%i"%(config.oc_account_name, 2)
     shared['SHARE_LOCAL_DIR'] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
 
     step (8, 'Sharer Final step')
@@ -107,13 +112,16 @@ def shareeOne(step):
     run_ocsync(d,user_num=2)
     list_files(d)
 
-    sharedDir = os.path.join(d,'localShareDir')
+    sharedDir = os.path.join(d, dirName)
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedDir)
-    error_check(os.path.exists(sharedDir), "Directory %s should exist" %sharedDir)
+
+    user2 = "%s%i"%(config.oc_account_name, 2)
+    expect_server_file_exists(user2, dirName)
+
+    expect_exists(sharedDir, isDir=True)
 
     step (6, 'Sharee One share files with user 3')
 
-    user2 = "%s%i"%(config.oc_account_name, 2)
     user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': OCS_PERMISSION_ALL}
     share_file_with_user ('localShareDir/TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
@@ -126,9 +134,8 @@ def shareeTwo(step):
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()
 
-    procName = reflection.getProcessName()
-    dirName = "%s/%s"%(procName, 'localShareDir')
-    localDir = make_workdir(dirName)
+    localDir = os.path.join(d, dirName)
+    mkdir(localDir)
 
     step (13, 'Sharee two validates share file')
 
@@ -137,7 +144,11 @@ def shareeTwo(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+
+    user3 = "%s%i"%(config.oc_account_name, 3)
+    expect_server_file_exists(user3, dirName)
+
+    expect_exists(sharedFile)
 
     step (8, 'Sharee Two final step')
 
