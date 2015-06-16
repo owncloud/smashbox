@@ -3,6 +3,7 @@ import re
 import tempfile
 import uuid
 import owncloud
+import zipfile
 from smashbox.utilities import *
 from smashbox.script import config as sconf
 
@@ -19,6 +20,16 @@ def check_filesize(username, password, path, size):
         else:
             raise e
 
+def check_local_filesize(username, password, localpath, size):
+    '''username and password remains to keep the expected signature'''
+    return os.path.getsize(localpath) == size
+
+def check_zip_contents(username, password, localpath, content_list):
+    checked_result = False
+    with zipfile.ZipFile(localpath, 'r') as myzip:
+        checked_result = myzip.namelist() == content_list
+    return checked_result
+
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
     if match is not None:
@@ -26,7 +37,6 @@ def parse_worker_number(worker_name):
     else:
         return None
 
-tmpname = tempfile.gettempdir() + os.sep + str(uuid.uuid4())
 
 testsets = [
         { 'action_method': 'put_file_contents',
@@ -46,11 +56,19 @@ testsets = [
 #          'overwrite_kwargs' : {'chunked' : True, 'chunk_size' : 1024*1024}, #1MB
 #        },
         { 'action_method': 'get_file',
-          'action_args': ('/folder/bigfile.dat', tmpname),
+          'action_args': ['/folder/bigfile.dat', 'bigfile.dat'],
           'action_kwargs': {'pyocactiondebug': True},
           'accounts': sconf.oc_number_test_users,
-          'extra_check': 'check_filesize',  # check remotely
-          'extra_check_params': ('/folder/bigfile.dat', 10000*1000),
+          'extra_check': 'check_local_filesize',
+          'extra_check_params': ['bigfile.dat', 10000*1000],
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'get_directory_as_zip',
+          'action_args': ['/folder', 'folder.zip'],
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_zip_contents',
+          'extra_check_params': ['folder.zip', ['folder/', 'folder/bigfile.dat']],
           'overwrite_kwargs' : {'chunked': False},
         },
 ]
@@ -123,6 +141,14 @@ def doer(step):
     process_number = parse_worker_number(reflection.getProcessName())
     user_account = sconf.oc_account_name if process_number <= 0 else '%s%i' % (sconf.oc_account_name, process_number)
 
+    step(2, 'create working dir in case it\'s needed')
+
+    d = make_workdir()
+
+    if method in ('get_file', 'get_directory_as_zip'):
+        # we need to cheat at this two method to make them work properly
+        args[1] = os.path.join(d, args[1])
+
     step(4, 'action over file')
 
     retry_action = False
@@ -146,6 +172,8 @@ def doer(step):
     if check:
         logger.debug('additional check %s' % check)
         check_params = config.get('extra_check_params', ())
+        if method in ('get_file', 'get_directory_as_zip'):
+            check_params[0] = os.path.join(d, check_params[0])
         error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
 
 # add workers
