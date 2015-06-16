@@ -1,6 +1,7 @@
 import os
 import re
 import tempfile
+import uuid
 import owncloud
 from smashbox.utilities import *
 from smashbox.script import config as sconf
@@ -25,6 +26,8 @@ def parse_worker_number(worker_name):
     else:
         return None
 
+tmpname = tempfile.gettempdir() + os.sep + str(uuid.uuid4())
+
 testsets = [
         { 'action_method': 'put_file_contents',
           'action_args': ('/folder/bigfile.dat', '123'*50),
@@ -32,7 +35,7 @@ testsets = [
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_filesize',
           'extra_check_params': ('/folder/bigfile.dat', 3*50),
-          'overwrite_kwargs' : None,
+          'overwrite_kwargs' : {'chunked': False},
         },
 #        { 'action_method': 'put_file_contents',
 #          'action_args': ('/folder/bigfile.dat', '123'*50),
@@ -42,6 +45,14 @@ testsets = [
 #          'extra_check_params': ('/folder/bigfile.dat', 3*50),
 #          'overwrite_kwargs' : {'chunked' : True, 'chunk_size' : 1024*1024}, #1MB
 #        },
+        { 'action_method': 'get_file',
+          'action_args': ('/folder/bigfile.dat', tmpname),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_filesize',  # check remotely
+          'extra_check_params': ('/folder/bigfile.dat', 10000*1000),
+          'overwrite_kwargs' : {'chunked': False},
+        },
 ]
 
 @add_worker
