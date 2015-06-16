@@ -116,9 +116,13 @@ def sharer(step):
     run_ocsync(d,user_num=1)
     list_files(d)
 
+    user1 = "%s%i"%(config.oc_account_name, 1)
+    expect_server_file_exists(user1, 'TEST_FILE_USER_SHARE.dat')
+    expect_server_file_exists(user1, 'TEST_FILE_USER_RESHARE.dat')
+    expect_server_file_exists(user1, 'TEST_FILE_MODIFIED_USER_SHARE.dat')
+
     step (4,'Sharer shares files')
 
-    user1 = "%s%i"%(config.oc_account_name, 1)
     user2 = "%s%i"%(config.oc_account_name, 2)
 
     kwargs = {'perms': sharePermissions}
@@ -144,6 +148,7 @@ def sharer(step):
     remove_file(os.path.join(d,'TEST_FILE_USER_SHARE.dat'))
     run_ocsync(d,user_num=1)
     list_files(d)
+    expect_server_file_does_not_exist(user1, 'TEST_FILE_USER_SHARE.dat')
 
     step (14, 'Sharer final step')
 
@@ -157,18 +162,22 @@ def shareeOne(step):
 
     run_ocsync(d,user_num=2)
     list_files(d)
+    user2 = "%s%i"%(config.oc_account_name, 2)
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_SHARE.dat')
-    logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    sharedFileName = 'TEST_FILE_USER_SHARE.dat'
+    logger.info('Checking that %s is present in local directory for Sharee One', sharedFileName)
+    expect_server_file_exists(user2, sharedFileName)
+    expect_exists(os.path.join(d, sharedFileName))
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
-    logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    sharedFileName = 'TEST_FILE_USER_RESHARE.dat'
+    logger.info('Checking that %s is present in local directory for Sharee One', sharedFileName)
+    expect_server_file_exists(user2, sharedFileName)
+    expect_exists(os.path.join(d, sharedFileName))
 
-    sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat')
-    logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    sharedFileName = 'TEST_FILE_MODIFIED_USER_SHARE.dat'
+    logger.info('Checking that %s is present in local directory for Sharee One', sharedFileName)
+    expect_server_file_exists(user2, sharedFileName)
+    expect_exists(os.path.join(d, sharedFileName))
 
     step (6, 'Sharee One modifies TEST_FILE_MODIFIED_USER_SHARE.dat')
 
@@ -185,7 +194,6 @@ def shareeOne(step):
 
     step (8, 'Sharee One share files with user 3')
 
-    user2 = "%s%i"%(config.oc_account_name, 2)
     user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': sharePermissions}
     result = share_file_with_user ('TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
@@ -198,18 +206,20 @@ def shareeOne(step):
     run_ocsync(d,user_num=2)
     list_files(d)
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    sharedFileName = 'TEST_FILE_USER_RESHARE.dat'
+    logger.info('Checking that %s is not present in local directory for Sharee One', sharedFileName)
+    expect_server_file_does_not_exist(user2, sharedFileName)
+    expect_does_not_exist(os.path.join(d, sharedFileName))
 
     step (13, 'Sharee syncs and validates file does not exist')
 
     run_ocsync(d,user_num=2)
     list_files(d)
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_SHARE.dat')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    sharedFileName = 'TEST_FILE_USER_SHARE.dat'
+    logger.info('Checking that %s is not present in local directory for Sharee One', sharedFileName)
+    expect_server_file_does_not_exist(user2, sharedFileName)
+    expect_does_not_exist(os.path.join(d, sharedFileName))
 
     step (14, 'Sharee One final step')
 
@@ -224,23 +234,26 @@ def shareeTwo(step):
     run_ocsync(d,user_num=3)
     list_files(d)
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
+    sharedFileName = 'TEST_FILE_USER_RESHARE.dat'
+    user3 = "%s%i"%(config.oc_account_name, 3)
 
     if not sharePermissions & OCS_PERMISSION_SHARE:
-      logger.info ('Checking that %s is not present in local directory for Sharee Two', sharedFile)
-      error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+        logger.info('Checking that %s is not present in local directory for Sharee Two', sharedFileName)
+        expect_server_file_does_not_exist(user3, sharedFileName)
+        expect_does_not_exist(os.path.join(d, sharedFileName))
     else:
-      logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-      error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+        logger.info('Checking that %s is not present in local directory for Sharee Two', sharedFileName)
+        expect_server_file_exists(user3, sharedFileName)
+        expect_exists(os.path.join(d, sharedFileName))
 
     step (11, 'Sharee two validates file does not exist after unsharing')
 
     run_ocsync(d,user_num=3)
     list_files(d)
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    logger.info('Checking that %s is not present in local directory for Sharee Two', sharedFileName)
+    expect_server_file_does_not_exist(user3, sharedFileName)
+    expect_does_not_exist(os.path.join(d, sharedFileName))
 
     step (14, 'Sharee Two final step')
 
