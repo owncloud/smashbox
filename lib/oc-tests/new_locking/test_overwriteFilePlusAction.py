@@ -20,6 +20,33 @@ def check_filesize(username, password, path, size):
         else:
             raise e
 
+def check_file_exists(username, password, path):
+    try:
+        info = pyocaction(username, password, False, 'file_info', path)
+        return False if info is None else True
+    except owncloud.ResponseError as e:
+        if e.status_code == 404:
+            return False
+        else:
+            raise e
+
+def check_all_files_not_exists(username, password, *args):
+    gen = (check_file_not_exists(username, password, i) for i in args)
+    return all(gen)
+
+def check_all_files_exists(username, password, *args):
+    gen = (check_file_exists(username, password, i) for i in args)
+    return all(gen)
+
+def check_file_not_exists(username, password, path):
+    return not check_file_exists(username, password, path)
+
+def check_first_exists_second_not(username, password, path1, path2):
+    return check_file_exists(username, password, path1) and check_file_not_exists(username, password, path2)
+
+def check_first_list_exists_second_list_not(username, password, pathlist1, pathlist2):
+    return check_all_files_exists(username, password, *pathlist1) and check_all_files_not_exists(username, password, *pathlist2)
+
 def check_local_filesize(username, password, localpath, size):
     '''username and password remains to keep the expected signature'''
     return os.path.getsize(localpath) == size
@@ -63,12 +90,70 @@ testsets = [
           'extra_check_params': ['bigfile.dat', 10000*1000],
           'overwrite_kwargs' : {'chunked': False},
         },
+        { 'action_method': 'file_info',
+          'action_args': ('/folder/bigfile.dat',),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': None,
+          'extra_check_params': (),
+          'overwrite_kwargs' : {'chunked': False},
+        },
         { 'action_method': 'get_directory_as_zip',
           'action_args': ['/folder', 'folder.zip'],
           'action_kwargs': {'pyocactiondebug': True},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_zip_contents',
           'extra_check_params': ['folder.zip', ['folder/', 'folder/bigfile.dat']],
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'delete',
+          'action_args': ('/folder/bigfile.dat',),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_file_not_exists',
+          'extra_check_params': ('/folder/bigfile.dat',),
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'delete',
+          'action_args': ('/folder',),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_all_files_not_exists',
+          'extra_check_params': ('/folder/bigfile.dat', '/folder'),
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder/bigfile.dat', '/folder/bigrenamed.dat'),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_first_exists_second_not',
+          'extra_check_params': ('/folder/bigrenamed.dat', '/folder/bigfile.dat'),
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder/bigfile.dat', '/folder2/bigfile.dat'),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_first_exists_second_not',
+          'extra_check_params': ('/folder2/bigfile.dat', '/folder/bigfile.dat'),
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder', '/folder-renamed'),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_first_list_exists_second_list_not',
+          'extra_check_params': (('/folder-renamed', '/folder-renamed/bigfile.dat'),
+                                    ('/folder', '/folder/bigfile.dat')),
+          'overwrite_kwargs' : {'chunked': False},
+        },
+        { 'action_method': 'move',
+          'action_args': ('/folder', '/folder2/folder'),
+          'action_kwargs': {'pyocactiondebug': True},
+          'accounts': sconf.oc_number_test_users,
+          'extra_check': 'check_first_list_exists_second_list_not',
+          'extra_check_params': (('/folder2', '/folder2/folder', '/folder2/folder/bigfile.dat'),
+                                    ('/folder', '/folder/bigfile.dat')),
           'overwrite_kwargs' : {'chunked': False},
         },
 ]
