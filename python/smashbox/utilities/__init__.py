@@ -675,6 +675,59 @@ def check_groups(num_groups=None):
             result = check_owncloud_group(group_name)
             error_check(result, 'Group %s not found' % group_name)
 
+def expect_server_file_exists(username, path):
+    """ Check whether a user has a file on the server
+
+    :param username: name of user to check
+    :param path: path of the file to check
+    """
+    from owncloud import ResponseError
+
+    logger.info('Checking whether file %s exists for user %s', path, username)
+
+    oc_api = get_oc_api()
+    oc_api.login(username, config.oc_account_password)
+
+    exists = False
+    try:
+        info = oc_api.file_info(path)
+        exists = info is not None
+
+    except ResponseError as err:
+        if err.status_code != 404:
+            raise err
+
+    error_check(exists, "File %s does not exist on the server for user %s but should" % (path, username))
+
+def expect_server_file_does_not_exist(username, path):
+    """ Check whether a user does not have a file on the server
+
+    :param username: name of user to check
+    :param path: path of the file to check
+    """
+    from owncloud import ResponseError
+
+    logger.info('Checking whether file %s does not exist for user %s', path, username)
+
+    oc_api = get_oc_api()
+    oc_api.login(username, config.oc_account_password)
+
+    oc_api = get_oc_api()
+    oc_api.login(username, config.oc_account_password)
+
+    exists = True
+    try:
+        info = oc_api.file_info(path)
+        exists = info is None
+
+    except ResponseError as err:
+        if err.status_code != 404:
+            raise err
+        else:
+            exists = False
+
+    error_check(not exists, "File %s exists on the server for user %s but should not" % (path, username))
+
 
 def expect_modified(fn, md5):
     """ Compares that the checksum of two files is different
