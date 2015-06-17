@@ -1,3 +1,35 @@
+__doc__ = """
+Test locking feature. The test will ovewrite a file big enough and perform an operation
+while the overwrite is running. Each test set will run a different operation.
+Chunked uploads are currently outside of the tests
+
+Test sets:
+* overwrite + overwrite
+* overwrite + download file
+* overwrite + info (propfind)
+* overwrite + download folder as zip
+* overwrite + delete file
+* overwrite + delete folder
+* overwrite + rename file
+* overwrite + move file
+* overwrite + rename folder
+* overwrite + move folder
+
++-------------+----------------------------+--------------------+
+| step number | overwriter                 | doer               |
++-------------+----------------------------+--------------------+
+| 2           | upload big file            | create working dir |
++-------------+----------------------------+--------------------+
+| 3           | overwrite big file (async) |                    |
++-------------+----------------------------+--------------------+
+| 4           |                            | perform action     |
++-------------+----------------------------+--------------------+
+| 5           | check result and cleanup   |                    |
++-------------+----------------------------+--------------------+
+| 6           |                            | check result       |
++-------------+----------------------------+--------------------+
+"""
+
 import os
 import re
 import tempfile
@@ -194,6 +226,8 @@ def overwriter(step):
 
     overwrite_kwargs = {'pyocactiondebug' : True}
     if type(config.get('overwrite_kwargs', None)) is dict:
+        # merge the test options (such as 'pyocactiondebug') with the ones from the configuration
+        # intended to use for chunked uploaded
         overwrite_kwargs.update(config.get('overwrite_kwargs', None))
     overwrite_thread = pyocaction(user_account, sconf.oc_account_password, True, 'put_file', '/folder/bigfile.dat', tmpfile[1], **overwrite_kwargs)
 
@@ -258,6 +292,7 @@ def doer(step):
         logger.debug('additional check %s' % check)
         check_params = config.get('extra_check_params', ())
         if method in ('get_file', 'get_directory_as_zip'):
+            # we need to cheat at this two method to make them work properly
             check_params[0] = os.path.join(d, check_params[0])
         error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
 
