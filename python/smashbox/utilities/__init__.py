@@ -354,8 +354,7 @@ def pyocaction(username, password, async, method, *args, **kwargs):
 
     """
     import owncloud
-    oc_protocol = 'https' if config.oc_ssl_enabled else 'http'
-    oc_url = oc_protocol + '://' + config.oc_server + '/' + config.oc_root
+    oc_url = pyocclient_basic_url()
     if kwargs.get('pyocactiondebug'):
         client = owncloud.Client(oc_url, debug=True)
         del kwargs['pyocactiondebug']
@@ -378,6 +377,14 @@ def pyocaction(username, password, async, method, *args, **kwargs):
         return (thread, result_queue)
     else:
         return caller(*args, **kwargs)
+
+def pyocclient_basic_url():
+    """
+    Return the url to be used by pyocclient-related functions / classes
+    """
+    oc_protocol = 'https' if config.oc_ssl_enabled else 'http'
+    oc_url = oc_protocol + '://' + config.oc_server + '/' + config.oc_root
+    return oc_url
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
