@@ -74,6 +74,8 @@ that first (on the TEST server instance).
 
 Support has been added for the provisioning API which creates a dependency on the pyocclient repo.
 
+Note that smashbox only works with python 2.x, not 3.x yet. Be sure to have pip and python 2 installed, not pip3 and so on!
+
 To install the library, run the following after checking out your branch:
 
 pip install -r requirements.txt
