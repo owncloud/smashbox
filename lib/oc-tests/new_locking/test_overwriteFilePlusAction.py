@@ -36,48 +36,9 @@ import tempfile
 import uuid
 import owncloud
 import zipfile
+import smashbox.utilities.pyocclient_wrapper
 from smashbox.utilities import *
 from smashbox.script import config as sconf
-
-def check_filesize(username, password, path, size):
-    try:
-        info = pyocaction(username, password, False, 'file_info', path)
-        if info is None:
-            return False
-        else:
-            return size == info.get_size()
-    except owncloud.ResponseError as e:
-        if e.status_code == 404:
-            return False
-        else:
-            raise e
-
-def check_file_exists(username, password, path):
-    try:
-        info = pyocaction(username, password, False, 'file_info', path)
-        return False if info is None else True
-    except owncloud.ResponseError as e:
-        if e.status_code == 404:
-            return False
-        else:
-            raise e
-
-def check_all_files_not_exists(username, password, *args):
-    gen = (check_file_not_exists(username, password, i) for i in args)
-    return all(gen)
-
-def check_all_files_exists(username, password, *args):
-    gen = (check_file_exists(username, password, i) for i in args)
-    return all(gen)
-
-def check_file_not_exists(username, password, path):
-    return not check_file_exists(username, password, path)
-
-def check_first_exists_second_not(username, password, path1, path2):
-    return check_file_exists(username, password, path1) and check_file_not_exists(username, password, path2)
-
-def check_first_list_exists_second_list_not(username, password, pathlist1, pathlist2):
-    return check_all_files_exists(username, password, *pathlist1) and check_all_files_not_exists(username, password, *pathlist2)
 
 def check_local_filesize(username, password, localpath, size):
     '''username and password remains to keep the expected signature'''
@@ -100,12 +61,13 @@ def parse_worker_number(worker_name):
 testsets = [
         { 'action_method': 'put_file_contents',
           'action_args': ('/folder/bigfile.dat', '123'*50),
-          'action_kwargs': {'pyocactiondebug' : True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_filesize',
           'extra_check_params': ('/folder/bigfile.dat', 3*50),
           'overwrite_kwargs' : {'chunked': False},
         },
+#  chunked uploads aren't supported for the moment
 #        { 'action_method': 'put_file_contents',
 #          'action_args': ('/folder/bigfile.dat', '123'*50),
 #          'action_kwargs': {'pyocactiondebug' : True},
@@ -116,7 +78,7 @@ testsets = [
 #        },
         { 'action_method': 'get_file',
           'action_args': ['/folder/bigfile.dat', 'bigfile.dat'],
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_local_filesize',
           'extra_check_params': ['bigfile.dat', 10000*1000],
@@ -124,23 +86,24 @@ testsets = [
         },
         { 'action_method': 'file_info',
           'action_args': ('/folder/bigfile.dat',),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': None,
           'extra_check_params': (),
           'overwrite_kwargs' : {'chunked': False},
         },
-        { 'action_method': 'get_directory_as_zip',
-          'action_args': ['/folder', 'folder.zip'],
-          'action_kwargs': {'pyocactiondebug': True},
-          'accounts': sconf.oc_number_test_users,
-          'extra_check': 'check_zip_contents',
-          'extra_check_params': ['folder.zip', ['folder/', 'folder/bigfile.dat']],
-          'overwrite_kwargs' : {'chunked': False},
-        },
+#  currently failing due to https://github.com/owncloud/core/issues/16960
+#        { 'action_method': 'get_directory_as_zip',
+#          'action_args': ['/folder', 'folder.zip'],
+#          'action_kwargs': {},
+#          'accounts': sconf.oc_number_test_users,
+#          'extra_check': 'check_zip_contents',
+#          'extra_check_params': ['folder.zip', ['folder/', 'folder/bigfile.dat']],
+#          'overwrite_kwargs' : {'chunked': False},
+#        },
         { 'action_method': 'delete',
           'action_args': ('/folder/bigfile.dat',),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_file_not_exists',
           'extra_check_params': ('/folder/bigfile.dat',),
@@ -148,7 +111,7 @@ testsets = [
         },
         { 'action_method': 'delete',
           'action_args': ('/folder',),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_all_files_not_exists',
           'extra_check_params': ('/folder/bigfile.dat', '/folder'),
@@ -156,7 +119,7 @@ testsets = [
         },
         { 'action_method': 'move',
           'action_args': ('/folder/bigfile.dat', '/folder/bigrenamed.dat'),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_exists_second_not',
           'extra_check_params': ('/folder/bigrenamed.dat', '/folder/bigfile.dat'),
@@ -164,7 +127,7 @@ testsets = [
         },
         { 'action_method': 'move',
           'action_args': ('/folder/bigfile.dat', '/folder2/bigfile.dat'),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_exists_second_not',
           'extra_check_params': ('/folder2/bigfile.dat', '/folder/bigfile.dat'),
@@ -172,7 +135,7 @@ testsets = [
         },
         { 'action_method': 'move',
           'action_args': ('/folder', '/folder-renamed'),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_list_exists_second_list_not',
           'extra_check_params': (('/folder-renamed', '/folder-renamed/bigfile.dat'),
@@ -181,7 +144,7 @@ testsets = [
         },
         { 'action_method': 'move',
           'action_args': ('/folder', '/folder2/folder'),
-          'action_kwargs': {'pyocactiondebug': True},
+          'action_kwargs': {},
           'accounts': sconf.oc_number_test_users,
           'extra_check': 'check_first_list_exists_second_list_not',
           'extra_check_params': (('/folder2', '/folder2/folder', '/folder2/folder/bigfile.dat'),
@@ -201,6 +164,8 @@ def overwriter(step):
     user_account = sconf.oc_account_name if process_number <= 0 else '%s%i' % (sconf.oc_account_name, process_number)
 
     step(2, 'create big file')
+
+    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
 
     d = make_workdir()
 
@@ -224,21 +189,22 @@ def overwriter(step):
     createfile(tmpfile[1], '5', count=1000, bs=10000)
     sum_new = md5sum(tmpfile[1])
 
-    overwrite_kwargs = {'pyocactiondebug' : True}
-    if type(config.get('overwrite_kwargs', None)) is dict:
-        # merge the test options (such as 'pyocactiondebug') with the ones from the configuration
-        # intended to use for chunked uploaded
-        overwrite_kwargs.update(config.get('overwrite_kwargs', None))
-    overwrite_thread = pyocaction(user_account, sconf.oc_account_password, True, 'put_file', '/folder/bigfile.dat', tmpfile[1], **overwrite_kwargs)
+    overwrite_kwargs = config.get('overwrite_kwargs', {})
+    overwrite_thread = client_wrapper.do_action_async('put_file', '/folder/bigfile.dat', tmpfile[1], **overwrite_kwargs)
 
     step(5, 'check result and cleanup')
 
-    # wait until the download finish
+    # wait until the overwrite finish
     overwrite_thread[0].join()
+    overwrite_result = overwrite_thread[1].get()
+    if isinstance(overwrite_result, Exception):
+        raise overwrite_result
+    else:
+        error_check(overwrite_result, 'put file failed')
 
     # download the file to check that it has been overwritten
     tmpfile2 = tempfile.mkstemp()
-    get_file_result = pyocaction(user_account, sconf.oc_account_password, False, 'get_file', '/folder/bigfile.dat', tmpfile2[1], pyocactiondebug=True)
+    get_file_result = client_wrapper.do_action('get_file', '/folder/bigfile.dat', tmpfile2[1])
 
     sum_downloaded = md5sum(tmpfile2[1])
 
@@ -262,6 +228,8 @@ def doer(step):
 
     step(2, 'create working dir in case it\'s needed')
 
+    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
+
     d = make_workdir()
 
     if method in ('get_file', 'get_directory_as_zip'):
@@ -273,7 +241,7 @@ def doer(step):
     retry_action = False
     # perform the action
     try:
-        result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
+        result = client_wrapper.do_action(method, *args, **kwargs)
     except owncloud.ResponseError as e:
         logger.debug('%s action failed. Checking the status to know if the file is locked' % (method,))
         error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
@@ -282,7 +250,7 @@ def doer(step):
     step(6, 'check results')
 
     if retry_action:
-        result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
+        result = client_wrapper.do_action(method, *args, **kwargs)
     # check successful result
     error_check(result, method + ' action didn\'t finish correctly')
 
@@ -294,9 +262,11 @@ def doer(step):
         if method in ('get_file', 'get_directory_as_zip'):
             # we need to cheat at this two method to make them work properly
             check_params[0] = os.path.join(d, check_params[0])
-        error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
+            error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
+        else:
+            error_check(getattr(client_wrapper, check)(*check_params), 'extra check failed: %s %s' % (check, check_params))
 
 # add workers
 for i in range(1, config.get('accounts', 1) + 1):
-    add_worker(overwriter, name='downloader_%s' % (i,))
+    add_worker(overwriter, name='overwriter_%s' % (i,))
     add_worker(doer, name='doer_%s' % (i,))
