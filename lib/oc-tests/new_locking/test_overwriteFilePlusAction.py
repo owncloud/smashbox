@@ -40,11 +40,11 @@ import smashbox.utilities.pyocclient_wrapper
 from smashbox.utilities import *
 from smashbox.script import config as sconf
 
-def check_local_filesize(username, password, localpath, size):
+def check_local_filesize(localpath, size):
     '''username and password remains to keep the expected signature'''
     return os.path.getsize(localpath) == size
 
-def check_zip_contents(username, password, localpath, content_list):
+def check_zip_contents(localpath, content_list):
     checked_result = False
     with zipfile.ZipFile(localpath, 'r') as myzip:
         checked_result = myzip.namelist() == content_list
@@ -262,7 +262,7 @@ def doer(step):
         if method in ('get_file', 'get_directory_as_zip'):
             # we need to cheat at this two method to make them work properly
             check_params[0] = os.path.join(d, check_params[0])
-            error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
+            error_check(globals()[check](*check_params), 'extra check failed: %s %s' % (check, check_params))
         else:
             error_check(getattr(client_wrapper, check)(*check_params), 'extra check failed: %s %s' % (check, check_params))
 
