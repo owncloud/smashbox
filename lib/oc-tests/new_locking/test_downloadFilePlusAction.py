@@ -30,48 +30,9 @@ import os
 import re
 import tempfile
 import owncloud
+import smashbox.utilities.pyocclient_wrapper
 from smashbox.utilities import *
 from smashbox.script import config as sconf
-
-def check_file_exists(username, password, path):
-    try:
-        info = pyocaction(username, password, False, 'file_info', path)
-        return False if info is None else True
-    except owncloud.ResponseError as e:
-        if e.status_code == 404:
-            return False
-        else:
-            raise e
-
-def check_file_not_exists(username, password, path):
-    return not check_file_exists(username, password, path)
-
-def check_filesize(username, password, path, size):
-    try:
-        info = pyocaction(username, password, False, 'file_info', path)
-        if info is None:
-            return False
-        else:
-            return size == info.get_size()
-    except owncloud.ResponseError as e:
-        if e.status_code == 404:
-            return False
-        else:
-            raise e
-
-def check_first_exists_second_not(username, password, path1, path2):
-    return check_file_exists(username, password, path1) and check_file_not_exists(username, password, path2)
-
-def check_all_files_not_exists(username, password, *args):
-    gen = (check_file_not_exists(username, password, i) for i in args)
-    return all(gen)
-
-def check_all_files_exists(username, password, *args):
-    gen = (check_file_exists(username, password, i) for i in args)
-    return all(gen)
-
-def check_first_list_exists_second_list_not(username, password, pathlist1, pathlist2):
-    return check_all_files_exists(username, password, *pathlist1) and check_all_files_not_exists(username, password, *pathlist2)
 
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
@@ -153,6 +114,8 @@ def downloader(step):
 
     step(2, 'create big file')
 
+    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
+
     d = make_workdir()
 
     list_files(d)
@@ -172,7 +135,7 @@ def downloader(step):
 
     tmpfile = tempfile.mkstemp()
     # download the file asynchronously
-    download_thread = pyocaction(user_account, sconf.oc_account_password, True, 'get_file', '/folder/bigfile.dat', tmpfile[1], pyocactiondebug=True)
+    download_thread = client_wrapper.do_action_async('get_file', '/folder/bigfile.dat', tmpfile[1])
 
     step(5, 'check result and cleanup')
 
@@ -194,13 +157,16 @@ def doer(step):
     process_number = parse_worker_number(reflection.getProcessName())
     user_account = sconf.oc_account_name if process_number <= 0 else '%s%i' % (sconf.oc_account_name, process_number)
 
+    step(2, 'synced setup')
+
+    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
+
     step(4, 'action over file')
 
     retry_action = False
     # perform the action
     try:
-        result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
-
+        result = client_wrapper.do_action(method, *args, **kwargs)
     except owncloud.ResponseError as e:
         logger.debug('%s action failed. Checking the status to know if the file is locked' % (method,))
         error_check(e.status_code == 423, 'unexpected status code [%i] : %s' % (e.status_code, e.get_resource_body()))
@@ -208,7 +174,8 @@ def doer(step):
 
     step(6, 'check results')
     if retry_action:
-        result = pyocaction(user_account, sconf.oc_account_password, False, method, *args, **kwargs)
+        result = client_wrapper.do_action(method, *args, **kwargs)
+
     # check successful result
     logger.debug('check %s method finished correctly' % method)
     error_check(result, method + ' action didn\'t finish correctly')
@@ -218,7 +185,7 @@ def doer(step):
     if check:
         logger.debug('additional check %s' % check)
         check_params = config.get('extra_check_params', ())
-        error_check(globals()[check](user_account, sconf.oc_account_password, *check_params), 'extra check failed: %s %s' % (check, check_params))
+        error_check(getattr(client_wrapper, check)(*check_params), 'extra check failed: %s %s' % (check, check_params))
 
 # add workers
 for i in range(1, config.get('accounts', 1) + 1):
