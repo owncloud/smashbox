@@ -73,6 +73,7 @@ run the smashbox tests locally on the owncloud server. You should try
 that first (on the TEST server instance).
 
 Support has been added for the provisioning API which creates a dependency on the pyocclient repo.
+Note: this requires having the provisioning api app installed and enabled on the ownCloud server.
 
 Note that smashbox only works with python 2.x, not 3.x yet. Be sure to have pip and python 2 installed, not pip3 and so on!
 
