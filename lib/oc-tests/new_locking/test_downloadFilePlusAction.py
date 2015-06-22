@@ -133,21 +133,28 @@ def downloader(step):
 
     step(3, 'download file async')
 
-    tmpfile = tempfile.mkstemp()
-    # download the file asynchronously
-    download_thread = client_wrapper.do_action_async('get_file', '/folder/bigfile.dat', tmpfile[1])
+    try:
+        tmpfile = tempfile.mkstemp()
+        # download the file asynchronously
+        download_thread = client_wrapper.do_action_async('get_file', '/folder/bigfile.dat', tmpfile[1])
 
-    step(5, 'check result and cleanup')
+        step(5, 'check result and cleanup')
 
-    # wait until the download finish
-    download_thread[0].join()
+        # wait until the download finish
+        download_thread[0].join()
+        download_result = download_thread[1].get()
+        if isinstance(download_result, Exception):
+            raise download_result
+        else:
+            error_check(download_result, 'download file failed')
 
-    sum5_2 = md5sum(tmpfile[1])
-    # check both md5 matches
-    logger.debug('checking md5sum of the downloaded files')
-    error_check(sum5 == sum5_2, 'uploaded file is different than the downloaded file [%s] - [%s]' % (sum5, sum5_2))
-    # remove temporal file
-    os.remove(tmpfile[1])
+        sum5_2 = md5sum(tmpfile[1])
+        # check both md5 matches
+        logger.debug('checking md5sum of the downloaded files')
+        error_check(sum5 == sum5_2, 'uploaded file is different than the downloaded file [%s] - [%s]' % (sum5, sum5_2))
+    finally:
+        # remove temporal file
+        os.remove(tmpfile[1])
 
 def doer(step):
     method = config.get('action_method', 'put_file_contents')
