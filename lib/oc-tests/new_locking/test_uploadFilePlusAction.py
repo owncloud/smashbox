@@ -1,22 +1,16 @@
 __doc__ = """
-Test locking feature. The test will ovewrite a file big enough and perform an operation
-while the overwrite is running. Each test set will run a different operation.
+Test locking feature. The test will upload a file big enough and perform an operation
+while the upload is running. Each test set will run a different operation.
 Chunked uploads are currently outside of the tests
 
 Test sets:
-* overwrite + overwrite
-* overwrite + download file
-* overwrite + info (propfind)
-* overwrite + download folder as zip
-* overwrite + delete file
-* overwrite + delete folder
-* overwrite + rename file
-* overwrite + move file
-* overwrite + rename folder
-* overwrite + move folder
+* upload + upload (same file)
+* upload + delete folder
+* upload + rename folder
+* upload + move folder
 
 +-------------+----------------------------+--------------------+
-| step number | overwriter                 | doer               |
+| step number | uploader                   | doer               |
 +-------------+----------------------------+--------------------+
 | 2           | upload big file            | create working dir |
 +-------------+----------------------------+--------------------+
@@ -199,18 +193,18 @@ def uploader(step):
         createfile(tmpfile[1], '5', count=1000, bs=10000)
         sum_new = md5sum(tmpfile[1])
 
-        overwrite_kwargs = config.get('overwrite_kwargs', {})
-        overwrite_thread = client_wrapper.do_action_async('put_file', '/folder/new_bigfile.dat', tmpfile[1], **overwrite_kwargs)
+        upload_kwargs = config.get('overwrite_kwargs', {})
+        upload_thread = client_wrapper.do_action_async('put_file', '/folder/new_bigfile.dat', tmpfile[1], **upload_kwargs)
 
         step(5, 'check result and cleanup')
 
-        # wait until the overwrite finish
-        overwrite_thread[0].join()
-        overwrite_result = overwrite_thread[1].get()
-        if isinstance(overwrite_result, Exception):
-            raise overwrite_result
+        # wait until the upload finish
+        upload_thread[0].join()
+        upload_result = upload_thread[1].get()
+        if isinstance(upload_result, Exception):
+            raise upload_result
         else:
-            error_check(overwrite_result, 'put file failed')
+            error_check(upload_result, 'put file failed')
 
         # download the file to check that it has been overwritten
         tmpfile2 = tempfile.mkstemp()
