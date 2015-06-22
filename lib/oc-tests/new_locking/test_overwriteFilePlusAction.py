@@ -185,38 +185,40 @@ def overwriter(step):
 
     step(3, 'overwrite file')
 
-    tmpfile = tempfile.mkstemp()
-    createfile(tmpfile[1], '5', count=1000, bs=10000)
-    sum_new = md5sum(tmpfile[1])
+    try:
+        tmpfile = tempfile.mkstemp()
+        createfile(tmpfile[1], '5', count=1000, bs=10000)
+        sum_new = md5sum(tmpfile[1])
 
-    overwrite_kwargs = config.get('overwrite_kwargs', {})
-    overwrite_thread = client_wrapper.do_action_async('put_file', '/folder/bigfile.dat', tmpfile[1], **overwrite_kwargs)
+        overwrite_kwargs = config.get('overwrite_kwargs', {})
+        overwrite_thread = client_wrapper.do_action_async('put_file', '/folder/bigfile.dat', tmpfile[1], **overwrite_kwargs)
 
-    step(5, 'check result and cleanup')
+        step(5, 'check result and cleanup')
 
-    # wait until the overwrite finish
-    overwrite_thread[0].join()
-    overwrite_result = overwrite_thread[1].get()
-    if isinstance(overwrite_result, Exception):
-        raise overwrite_result
-    else:
-        error_check(overwrite_result, 'put file failed')
+        # wait until the overwrite finish
+        overwrite_thread[0].join()
+        overwrite_result = overwrite_thread[1].get()
+        if isinstance(overwrite_result, Exception):
+            raise overwrite_result
+        else:
+            error_check(overwrite_result, 'put file failed')
 
-    # download the file to check that it has been overwritten
-    tmpfile2 = tempfile.mkstemp()
-    get_file_result = client_wrapper.do_action('get_file', '/folder/bigfile.dat', tmpfile2[1])
+        # download the file to check that it has been overwritten
+        tmpfile2 = tempfile.mkstemp()
+        get_file_result = client_wrapper.do_action('get_file', '/folder/bigfile.dat', tmpfile2[1])
 
-    sum_downloaded = md5sum(tmpfile2[1])
+        sum_downloaded = md5sum(tmpfile2[1])
 
-    # check both md5 matches
-    error_check(get_file_result, 'overwritten file failed to download')
-    logger.debug('checking md5sum of the downloaded files')
-    error_check(sum_orig != sum_new, 'original file didn\'t get overwritten')
-    error_check(sum_new == sum_downloaded, 'overwritten file is different than the downloaded file [%s] - [%s]' % (sum_new, sum_downloaded))
-
-    # remove temporal files
-    os.remove(tmpfile[1])
-    os.remove(tmpfile2[1])
+        # check both md5 matches
+        error_check(get_file_result, 'overwritten file failed to download')
+        logger.debug('checking md5sum of the downloaded files')
+        error_check(sum_orig != sum_new, 'original file didn\'t get overwritten')
+        error_check(sum_new == sum_downloaded, 'overwritten file is different than the downloaded file [%s] - [%s]' % (sum_new, sum_downloaded))
+    finally:
+        # remove temporal files
+        for tfile in ('tmpfile', 'tmpfile2'):
+            if tfile in locals():
+                os.remove(locals()[tfile][1])
 
 def doer(step):
     method = config.get('action_method', 'put_file_contents')
