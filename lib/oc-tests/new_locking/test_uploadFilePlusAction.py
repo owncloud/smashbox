@@ -34,10 +34,6 @@ import smashbox.utilities.pyocclient_wrapper
 from smashbox.utilities import *
 from smashbox.script import config as sconf
 
-def check_local_filesize(localpath, size):
-    '''username and password remains to keep the expected signature'''
-    return os.path.getsize(localpath) == size
-
 def check_zip_contents(localpath, content_list):
     checked_result = False
     with zipfile.ZipFile(localpath, 'r') as myzip:
@@ -70,26 +66,6 @@ testsets = [
 #          'extra_check_params': ('/folder/bigfile.dat', 3*50),
 #          'overwrite_kwargs' : {'chunked' : True, 'chunk_size' : 1024*1024}, #1MB
 #        },
-#  unreliable test: locked exception will be thrown in the final rename (after the upload
-#    not during the upload)
-#        { 'action_method': 'get_file',
-#          'action_args': ['/folder/new_bigfile.dat', 'new_bigfile.dat'],
-#          'action_kwargs': {},
-#          'accounts': sconf.oc_number_test_users,
-#          'extra_check': 'check_local_filesize',
-#          'extra_check_params': ['new_bigfile.dat', 10000*1000],
-#          'overwrite_kwargs' : {'chunked': False},
-#        },
-#  unreliable test: locked exception will be thrown in the final rename (after the upload
-#    not during the upload)
-#        { 'action_method': 'file_info',
-#          'action_args': ('/folder/new_bigfile.dat',),
-#          'action_kwargs': {},
-#          'accounts': sconf.oc_number_test_users,
-#          'extra_check': None,
-#          'extra_check_params': (),
-#          'overwrite_kwargs' : {'chunked': False},
-#        },
 #  currently failing due to https://github.com/owncloud/core/issues/16960
 #        { 'action_method': 'get_directory_as_zip',
 #          'action_args': ['/folder', 'folder.zip'],
@@ -97,16 +73,6 @@ testsets = [
 #          'accounts': sconf.oc_number_test_users,
 #          'extra_check': 'check_zip_contents',
 #          'extra_check_params': ['folder.zip', ['folder/', 'folder/bigfile.dat', 'folder/new_bigfile.dat']],
-#          'overwrite_kwargs' : {'chunked': False},
-#        },
-#  unreliable test: locked exception will be thrown in the final rename (after the upload
-#    not during the upload)
-#        { 'action_method': 'delete',
-#          'action_args': ('/folder/new_bigfile.dat',),
-#          'action_kwargs': {},
-#          'accounts': sconf.oc_number_test_users,
-#          'extra_check': 'check_file_not_exists',
-#          'extra_check_params': ('/folder/new_bigfile.dat',),
 #          'overwrite_kwargs' : {'chunked': False},
 #        },
         { 'action_method': 'delete',
@@ -117,26 +83,6 @@ testsets = [
           'extra_check_params': ('/folder/new_bigfile.dat', '/folder/bigfile.dat', '/folder'),
           'overwrite_kwargs' : {'chunked': False},
         },
-#  unreliable test: locked exception will be thrown in the final rename (after the upload
-#    not during the upload)
-#        { 'action_method': 'move',
-#          'action_args': ('/folder/new_bigfile.dat', '/folder/new_bigrenamed.dat'),
-#          'action_kwargs': {},
-#          'accounts': sconf.oc_number_test_users,
-#          'extra_check': 'check_first_exists_second_not',
-#          'extra_check_params': ('/folder/new_bigrenamed.dat', '/folder/new_bigfile.dat'),
-#          'overwrite_kwargs' : {'chunked': False},
-#        },
-#  unreliable test: locked exception will be thrown in the final rename (after the upload
-#    not during the upload)
-#        { 'action_method': 'move',
-#          'action_args': ('/folder/new_bigfile.dat', '/folder2/new_bigfile.dat'),
-#          'action_kwargs': {},
-#          'accounts': sconf.oc_number_test_users,
-#          'extra_check': 'check_first_exists_second_not',
-#          'extra_check_params': ('/folder2/new_bigfile.dat', '/folder/new_bigfile.dat'),
-#          'overwrite_kwargs' : {'chunked': False},
-#        },
         { 'action_method': 'move',
           'action_args': ('/folder', '/folder-renamed'),
           'action_kwargs': {},
