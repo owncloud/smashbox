@@ -691,7 +691,7 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
             return -2
 
 
-def list_remote_share(sharee):
+def list_open_remote_share(sharee):
     """ Accepts a remote share
 
     :param sharee: user who created the original share
@@ -700,7 +700,7 @@ def list_remote_share(sharee):
 
     oc_api = get_oc_api()
     oc_api.login(sharee, config.oc_account_password)
-    open_remote_shares = oc_api.list_remote_share()
+    open_remote_shares = oc_api.list_open_remote_share()
 
     return open_remote_shares
 

@@ -82,21 +82,6 @@ testsets = [
 
 
 @add_worker
-def setup(step):
-
-    step(1, 'create test users')
-    reset_owncloud_account(num_test_users=config.oc_number_test_users)
-    check_users(config.oc_number_test_users)
-
-    reset_rundir()
-    reset_server_log_file()
-
-    step(15, 'Validate server log file is clean')
-    d = make_workdir()
-    scrape_log_file(d)
-
-
-@add_worker
 def sharer(step):
 
     step(2, 'Create workdir')
@@ -167,7 +152,7 @@ def sharee_one(step):
 
     # Accept the remote shares for user2
     user2 = "%s%i" % (config.oc_account_name, 2)
-    openShares = list_remote_share(user2)
+    openShares = list_open_remote_share(user2)
     for share in openShares:
         accept_remote_share(user2, int(share['id']))
     sleep(5)
@@ -244,7 +229,7 @@ def sharee_two(step):
 
     # Accept the remote shares for user3
     user3 = "%s%i" % (config.oc_account_name, 3)
-    openShares = list_remote_share(user3)
+    openShares = list_open_remote_share(user3)
     for share in openShares:
         accept_remote_share(user3, int(share['id']))
 
