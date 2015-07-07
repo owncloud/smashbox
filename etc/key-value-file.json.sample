@@ -1,0 +1,4 @@
+{"oc_server": {"value": "test-server.com"},
+ "oc_server_shell_cmd": {"value": "ssh -t -l root test-server.com"},
+ "scp_port": {"value": "51101", "type": "int"},
+ "oc_ssl_enabled": {"value": "True", "type":"bool"}}
