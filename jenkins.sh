@@ -224,11 +224,13 @@ export LD_LIBRARY_PATH=${WORKSPACE}/client:${LD_LIBRARY_PATH}
 if [ -f "lib/${TEST_NAME}.py" ]; then
 	bin/smash --debug -a lib/${TEST_NAME}.py
 	RESULT=$?
+else
+	if [ -f "lib/oc-tests/${TEST_NAME}.py" ]; then
+		bin/smash --debug -a lib/oc-tests/${TEST_NAME}.py
+		RESULT=$?
+	else
+		echo Test case ${TEST_NAME} not found!
+		exit 3
+	fi
 fi
-
-if [ -f "lib/oc-tests/${TEST_NAME}.py" ]; then
-	bin/smash --debug -a lib/oc-tests/${TEST_NAME}.py
-	RESULT=$?
-fi
-
 exit $RESULT
