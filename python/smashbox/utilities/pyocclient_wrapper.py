@@ -1,6 +1,7 @@
 import owncloud
 import threading
 import Queue
+from smashbox.script import config
 
 class pyocclient_wrapper(object):
     """
@@ -171,3 +172,56 @@ class pyocclient_wrapper(object):
         list don't, False otherwise
         """
         return self.check_all_files_exists(*pathlist1) and self.check_all_files_not_exists(*pathlist2)
+
+def pyocaction(username, password, async, method, *args, **kwargs):
+    """
+    Run an action using the pyocclient. This method will create an ownCloud client and run
+    the method. A new client will be created each time.
+
+    :param username: username for the client (for authentication purposes)
+    :param password: password for the client (for authentication purposes)
+    :param async: run the method async? True = async, False = sync
+    :param method: the name of the method to be run from the owncloud client (check pyocclient
+    Client object to know what methods you can use
+    :param *args: arguments that will be passed to the method
+    :param **kwargs: arguments that will be passed to the method. The extra keyword
+    'pyocactiondebug' will enable debug in the Client object but won't be passed to the method
+
+    :return: a tuple containing a Thread object and a Queue (to get the result of the called
+    method once it finish) if the async param is set to True, and the result of the method
+     if is set to False.
+
+    examples:
+    `pyocaction(user, pass, False, 'put_file_contents', '/path/to/file', 'file content')`
+    `thread = pyocaction(user, pass, True, 'get_file', '/bigfile')`
+
+    """
+    oc_url = pyocclient_basic_url()
+    if kwargs.get('pyocactiondebug'):
+        client = owncloud.Client(oc_url, debug=True)
+        del kwargs['pyocactiondebug']
+    else:
+        client = owncloud.Client(oc_url)
+    client.login(username, password)
+
+    caller = getattr(client, method)
+    if async:
+
+        def caller_wrapper(method, q, *args, **kwargs):
+            q.put(method(*args, **kwargs))
+
+        result_queue = Queue.Queue()
+        caller_wrapper_args = (caller, result_queue,) + args
+        thread = threading.Thread(target=caller_wrapper, args=caller_wrapper_args, kwargs=kwargs)
+        thread.start()
+        return (thread, result_queue)
+    else:
+        return caller(*args, **kwargs)
+
+def pyocclient_basic_url():
+    """
+    Return the url to be used by pyocclient-related functions / classes
+    """
+    oc_protocol = 'https' if config.oc_ssl_enabled else 'http'
+    oc_url = oc_protocol + '://' + config.oc_server + '/' + config.oc_root
+    return oc_url
