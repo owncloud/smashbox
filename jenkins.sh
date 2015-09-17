@@ -60,7 +60,7 @@ done
 echo
 echo Ready to go!
 
-docker logs $DOCKER_CONTAINER_ID
+#docker logs $DOCKER_CONTAINER_ID
 
 curl http://$HOST/status.php
 
