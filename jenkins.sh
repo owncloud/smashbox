@@ -35,7 +35,7 @@ mkdir -p ${WORKSPACE}/data
 if [ -z "$USE_GIT_BRANCH" ]; then
 	DOCKER_CONTAINER_ID=`docker run -t -i -d -e "OC_URL=https://download.owncloud.org/community/owncloud-${serverVersion}.tar.bz2" -e "OC_ADMIN_USER=${ADMIN_USER}" -e "OC_ADMIN_PASS=${ADMIN_PASS}" ${DOCKER_IMAGE}`
 else
-	DOCKER_CONTAINER_ID=`docker run -t -i -d -e "OC_BRANCH=${GIT_BRANCH}" -e "OC_ADMIN_USER=${ADMIN_USER}" -e "OC_ADMIN_PASS=${ADMIN_PASS}" ${DOCKER_IMAGE}`
+	DOCKER_CONTAINER_ID=`docker run -t -i -d -e "OC_BRANCH=${GIT_BRANCH##*/}" -e "OC_ADMIN_USER=${ADMIN_USER}" -e "OC_ADMIN_PASS=${ADMIN_PASS}" ${DOCKER_IMAGE}`
 fi
 
 function cleanup() {
