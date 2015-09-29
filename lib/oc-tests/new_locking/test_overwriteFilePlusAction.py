@@ -165,7 +165,7 @@ def overwriter(step):
 
     step(2, 'create big file')
 
-    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
+    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_wrapper.pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
 
     d = make_workdir()
 
@@ -230,7 +230,7 @@ def doer(step):
 
     step(2, 'create working dir in case it\'s needed')
 
-    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
+    client_wrapper = pyocclient_wrapper.pyocclient_wrapper(pyocclient_wrapper.pyocclient_basic_url(), user_account, sconf.oc_account_password, debug=True)
 
     d = make_workdir()
 
