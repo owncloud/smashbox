@@ -229,12 +229,20 @@ export LD_LIBRARY_PATH=${WORKSPACE}/client:${LD_LIBRARY_PATH}
 #
 # run smashbox
 #
+TESTSET="-a"
+if [[ $TEST_NAME == *"@"* ]]; then
+	TESTSET="-t=${TEST_NAME##*@}"
+	TEST_NAME="$( cut -d '@' -f 1 <<< "$TEST_NAME" )"
+fi
+
+echo "Running smashbox with $TESTSET"
+
 if [ -f "lib/${TEST_NAME}.py" ]; then
-	bin/smash --debug -a lib/${TEST_NAME}.py
+	bin/smash --debug $TESTSET lib/${TEST_NAME}.py
 	RESULT=$?
 else
 	if [ -f "lib/oc-tests/${TEST_NAME}.py" ]; then
-		bin/smash --debug -a lib/oc-tests/${TEST_NAME}.py
+		bin/smash --debug $TESTSET lib/oc-tests/${TEST_NAME}.py
 		RESULT=$?
 	else
 		echo Test case ${TEST_NAME} not found!
