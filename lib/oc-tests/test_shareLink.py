@@ -5,12 +5,36 @@ __doc__ = """
 Test basic file sharing by link
 
 Covers:
- * https://github.com/owncloud/core/pull/19619
+ * Single file share: https://github.com/owncloud/core/pull/19619
+ * Folder share, single file direct download (click on file list)
+ * Folder share, select single file and download (checkbox)
+ * Folder share, select multiple files and download (checkbox)
+ * Folder share, download full folder
 
 """
 
 
 filesize_kb = int(config.get('share_filesizeKB', 10))
+
+test_downloader = config.get('test_downloader', 'full_folder')
+
+testsets = [
+    {
+        'test_downloader': 'single_file'
+    },
+    {
+        'test_downloader': 'direct_single_files'
+    },
+    {
+        'test_downloader': 'selected_single_files'
+    },
+    {
+        'test_downloader': 'full_folder'
+    },
+    {
+        'test_downloader': 'selected_files'
+    }
+]
 
 
 @add_worker
@@ -41,9 +65,13 @@ def sharer(step):
     dir_name = "%s/%s" % (proc_name, 'localShareDir')
     local_dir = make_workdir(dir_name)
 
-    createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE.dat'), '0', count=1000, bs=filesize_kb)
+    createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE1.txt'), '1', count=1000, bs=filesize_kb)
+    createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE2.txt'), '2', count=1000, bs=filesize_kb)
+    createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE3.txt'), '3', count=1000, bs=filesize_kb)
     shared = reflection.getSharedObject()
-    shared['md5_sharer'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE.dat'))
+    shared['MD5_TEST_FILE_LINK_SHARE1'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE1.txt'))
+    shared['MD5_TEST_FILE_LINK_SHARE2'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE2.txt'))
+    shared['MD5_TEST_FILE_LINK_SHARE3'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE3.txt'))
 
     list_files(d)
     run_ocsync(d, user_num=1)
@@ -55,24 +83,159 @@ def sharer(step):
     oc_api.login("%s%i" % (config.oc_account_name, 1), config.oc_account_password)
 
     kwargs = {'perms': 31}
-    share = oc_api.share_file_with_link(os.path.join('localShareDir', 'TEST_FILE_LINK_SHARE.dat'), **kwargs)
-    shared['SHARE_LINK_TOKEN'] = share.token
+    share = oc_api.share_file_with_link(os.path.join('localShareDir', 'TEST_FILE_LINK_SHARE1.txt'), **kwargs)
+    shared['SHARE_LINK_TOKEN_TEST_FILE_LINK_SHARE1'] = share.token
+    share = oc_api.share_file_with_link('localShareDir', **kwargs)
+    shared['SHARE_LINK_TOKEN_TEST_DIR'] = share.token
 
 
-@add_worker
-def public_downloader(step):
+def public_downloader_single_file(step):
 
     step(2, 'Create workdir')
     d = make_workdir()
 
-    step(5, 'publicDownloader downloads and validates the file\'s integrity')
+    step(5, 'Downloads and validate')
 
     shared = reflection.getSharedObject()
     url = oc_webdav_url(
-        remote_folder=os.path.join('index.php', 's', shared['SHARE_LINK_TOKEN'], 'download'),
+        remote_folder=os.path.join('index.php', 's', shared['SHARE_LINK_TOKEN_TEST_FILE_LINK_SHARE1'], 'download'),
         webdav_endpoint=config.oc_root
     )
 
-    download_target = os.path.join(d, 'TEST_FILE_LINK_SHARE.dat')
-    runcmd('curl -k %s -o %s %s' % (config.get('curl_opts', ''), download_target, url))
-    expect_not_modified(download_target, shared['md5_sharer'])
+    download_target = os.path.join(d, 'TEST_FILE_LINK_SHARE1.txt')
+    runcmd('curl -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
+    expect_not_modified(download_target, shared['MD5_TEST_FILE_LINK_SHARE1'])
+
+
+def public_downloader_direct_single_files(step):
+
+    step(2, 'Create workdir')
+    d = make_workdir()
+
+    step(5, 'Downloads and validate')
+
+    shared = reflection.getSharedObject()
+    url = oc_webdav_url(
+        remote_folder=os.path.join(
+            'index.php', 's',
+            shared['SHARE_LINK_TOKEN_TEST_DIR'],
+            'download?path=%2F&files=TEST_FILE_LINK_SHARE1.txt'
+        ),
+        webdav_endpoint=config.oc_root
+    )
+
+    download_target = os.path.join(d, 'TEST_FILE_LINK_SHARE1.txt')
+    runcmd('curl -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
+    expect_not_modified(download_target, shared['MD5_TEST_FILE_LINK_SHARE1'])
+
+
+def public_downloader_selected_single_files(step):
+
+    step(2, 'Create workdir')
+    d = make_workdir()
+
+    step(5, 'Downloads and validate')
+
+    shared = reflection.getSharedObject()
+    url = oc_webdav_url(
+        remote_folder=os.path.join(
+            'index.php', 's',
+            shared['SHARE_LINK_TOKEN_TEST_DIR'],
+            'download?path=%2F&files=%5B%22TEST_FILE_LINK_SHARE1.txt%22%5D'
+        ),
+        webdav_endpoint=config.oc_root
+    )
+
+    download_target = os.path.join(d, 'TEST_FILE_LINK_SHARE1.txt')
+    runcmd('curl -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
+    expect_not_modified(download_target, shared['MD5_TEST_FILE_LINK_SHARE1'])
+
+
+def public_downloader_full_folder(step):
+
+    step(2, 'Create workdir')
+    d = make_workdir()
+
+    step(5, 'Downloads and validate')
+
+    shared = reflection.getSharedObject()
+    url = oc_webdav_url(
+        remote_folder=os.path.join('index.php', 's', shared['SHARE_LINK_TOKEN_TEST_DIR'], 'download'),
+        webdav_endpoint=config.oc_root
+    )
+
+    download_target = os.path.join(d, '%s%s' % (shared['SHARE_LINK_TOKEN_TEST_DIR'], '.zip'))
+    unzip_target = os.path.join(d, 'unzip')
+    runcmd('curl -v -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
+    runcmd('unzip -d %s %s' % (unzip_target, download_target))
+
+    list_files(d, recursive=True)
+
+    expect_exists(os.path.join(unzip_target, 'localShareDir'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE1.txt'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE2.txt'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE3.txt'))
+
+    expect_not_modified(
+        os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE1.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE1']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE2.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE2']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE3.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE3']
+    )
+
+
+def public_downloader_selected_files(step):
+
+    step(2, 'Create workdir')
+    d = make_workdir()
+
+    step(5, 'Downloads and validate')
+
+    shared = reflection.getSharedObject()
+    url = oc_webdav_url(
+        remote_folder=os.path.join(
+            'index.php', 's',
+            shared['SHARE_LINK_TOKEN_TEST_DIR'],
+            'download?path=%2F&files=%5B%22TEST_FILE_LINK_SHARE1.txt%22%2C%22TEST_FILE_LINK_SHARE2.txt%22%5D'
+        ),
+        webdav_endpoint=config.oc_root
+    )
+
+    download_target = os.path.join(d, '%s%s' % (shared['SHARE_LINK_TOKEN_TEST_DIR'], '.zip'))
+    unzip_target = os.path.join(d, 'unzip')
+    runcmd('curl -v -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
+    runcmd('unzip -d %s %s' % (unzip_target, download_target))
+
+    list_files(d, recursive=True)
+
+    expect_does_not_exist(os.path.join(unzip_target, 'localShareDir'))
+    expect_exists(os.path.join(unzip_target, 'TEST_FILE_LINK_SHARE1.txt'))
+    expect_exists(os.path.join(unzip_target, 'TEST_FILE_LINK_SHARE2.txt'))
+    expect_does_not_exist(os.path.join(unzip_target, 'TEST_FILE_LINK_SHARE3.txt'))
+
+    expect_not_modified(
+        os.path.join(unzip_target, 'TEST_FILE_LINK_SHARE1.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE1']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'TEST_FILE_LINK_SHARE2.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE2']
+    )
+
+
+if test_downloader == 'single_file':
+    add_worker(public_downloader_single_file, name=test_downloader)
+elif test_downloader == 'direct_single_files':
+    add_worker(public_downloader_direct_single_files, name=test_downloader)
+elif test_downloader == 'selected_single_files':
+    add_worker(public_downloader_selected_single_files, name=test_downloader)
+elif test_downloader == 'full_folder':
+    add_worker(public_downloader_full_folder, name=test_downloader)
+elif test_downloader == 'selected_files':
+    add_worker(public_downloader_selected_files, name=test_downloader)
