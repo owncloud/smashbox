@@ -99,9 +99,7 @@ def sharer(step):
 
     step (3,'Create initial test directory')
 
-    procName = reflection.getProcessName()
-    dirName = "%s/%s"%(procName, 'localShareDir')
-    localDir = make_workdir(dirName)
+    mkdir(os.path.join(d, 'localShareDir'))
     max_user_num = sharer_num * 3
 
     list_files(d)
@@ -126,8 +124,8 @@ def sharer(step):
 
     run_ocsync(d,user_num=max_user_num-2)
 
-    list_files(d+'/localShareDir')
-    checkFilesExist(d) 
+    list_files(os.path.join(d,'localShareDir'))
+    checkFilesExist(d, max_user_num-2)
 
     step (8, 'Sharer final step')
 
@@ -154,16 +152,24 @@ def shareeOne(step):
 
     logger.info ('ShareeOne is creating %i files', numFilesToCreate)
     if numFilesToCreate == 1:
-      createfile(os.path.join(d,'localShareDir/TEST_FILE_NEW_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+      createfile(os.path.join(d,'localShareDir', 'TEST_FILE_NEW_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
     else:
       for i in range(1, numFilesToCreate):
-        filename = "%s%i%s" % ('localShareDir/TEST_FILE_NEW_USER_SHARE_',i,'.dat')
-        createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
+        filename = "%s%i%s" % ('TEST_FILE_NEW_USER_SHARE_',i,'.dat')
+        createfile(os.path.join(d,'localShareDir', filename),'0',count=1000,bs=filesizeKB)
 
     run_ocsync(d,user_num=max_user_num-1)
+    username = "%s%i" % (config.oc_account_name, max_user_num-1)
 
-    list_files(d+'/localShareDir')
-    checkFilesExist(d) 
+    if numFilesToCreate == 1:
+      expect_server_file_exists(username, os.path.join('localShareDir', 'TEST_FILE_NEW_USER_SHARE.dat'))
+    else:
+      for i in range(1, numFilesToCreate):
+        filename = "%s%i%s" % ('TEST_FILE_NEW_USER_SHARE_',i,'.dat')
+        expect_server_file_exists(username, os.path.join('localShareDir', filename))
+
+    list_files(os.path.join(d,'localShareDir'))
+    checkFilesExist(d, max_user_num-1)
 
     step (8, 'Sharee One final step')
 
@@ -177,45 +183,48 @@ def shareeTwo(step):
     shareeTwo_num = get_user_number_from_work_directory(d)
     max_user_num = shareeTwo_num * 3
 
-    procName = reflection.getProcessName()
-    dirName = "%s/%s"%(procName, 'localShareDir')
-    localDir = make_workdir(dirName)
+    sharedDir = mkdir(os.path.join(d, 'localShareDir'))
 
     step (5, 'Sharee two syncs and validates directory exists')
+
+    username = "%s%i" % (config.oc_account_name, max_user_num)
+    expect_server_file_exists(username, 'localShareDir', isDir=True)
 
     run_ocsync(d,user_num=max_user_num)
     list_files(d)
 
-    sharedDir = os.path.join(d,'localShareDir')
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedDir)
-    error_check(os.path.exists(sharedDir), "Directory %s should exist" %sharedDir)
+    expect_exists(sharedDir, isDir=True)
 
     step (7, 'Sharee two validates new files exist')
 
     run_ocsync(d,user_num=max_user_num)
 
-    list_files(d+'/localShareDir')
-    checkFilesExist(d) 
+    list_files(sharedDir)
+    checkFilesExist(d, max_user_num)
 
     step (8, 'Sharee Two final step')
 
 for i in range(share_sets):
     add_worker (shareeTwo,name="shareeTwo%02d"%(i+1))
 
-def checkFilesExist (tmpDir):
+def checkFilesExist (tmpDir, user_num):
 
     logger.info ('Checking if files exist in local directory ')
+    username = "%s%i" % (config.oc_account_name, user_num)
 
     if numFilesToCreate == 1:
-      sharedFile = os.path.join(tmpDir,'localShareDir/TEST_FILE_NEW_USER_SHARE.dat')
-      logger.info ('Checking that %s is present in local directory ', sharedFile)
-      error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+        sharedFile = os.path.join(tmpDir,'localShareDir', 'TEST_FILE_NEW_USER_SHARE.dat')
+        logger.info ('Checking that %s is present in local directory ', sharedFile)
+        expect_exists(sharedFile)
+        expect_server_file_exists(username,os.path.join('localShareDir', 'TEST_FILE_NEW_USER_SHARE.dat'))
     else:
       for i in range(1,numFilesToCreate):
-        filename = "%s%i%s" % ('localShareDir/TEST_FILE_NEW_USER_SHARE_',i,'.dat')
+        filename = "%s%i%s" % ('TEST_FILE_NEW_USER_SHARE_',i,'.dat')
         logger.info ('Checking that %s is present in local directory ', filename)
-        sharedFile = os.path.join(tmpDir, filename)
-        error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+        sharedFile = os.path.join(tmpDir, 'localShareDir', filename)
+        expect_exists(sharedFile)
+        expect_server_file_exists(username,os.path.join('localShareDir', filename))
 
 
 def get_user_number_from_work_directory(dir):

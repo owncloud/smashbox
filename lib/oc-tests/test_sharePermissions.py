@@ -207,6 +207,20 @@ def owner_worker(step):
     list_files(d)
     run_ocsync(d, user_num=1)
     list_files(d)
+    user1 = "%s%i"%(config.oc_account_name, 1)
+
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'subdir'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'delete_this_dir'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'move_this_out.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'move_this_to_subdir.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'move_this_to_subdir_for_overwrite.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'subdir', 'move_this_out.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'subdir', 'overwrite_this.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'rename_this.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'overwrite_this.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'overwrite_this_through_move_in.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'delete_this.dat'))
+    expect_server_file_exists(user1, os.path.join(SHARED_DIR_NAME, 'delete_this_dir', 'stuff.dat'))
 
     step (4, 'Shares folder with recipient')
 
@@ -238,6 +252,7 @@ def recipient_worker(step):
     sharedDir = os.path.join(d,SHARED_DIR_NAME)
     logger.info ('Checking that %s is present in local directory for recipient_worker', sharedDir)
     expect_exists(sharedDir)
+    expect_server_file_exists(user2, SHARED_DIR_NAME)
 
     for operation in ALL_OPERATIONS:
         # call the matching operation method
