@@ -224,7 +224,7 @@ scp_port=22
 
 DELIM
 
-export LD_LIBRARY_PATH=${WORKSPACE}/client:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${PWD}/client:${LD_LIBRARY_PATH}
 
 #
 # run smashbox
