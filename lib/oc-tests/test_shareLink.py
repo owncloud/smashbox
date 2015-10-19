@@ -32,6 +32,9 @@ testsets = [
         'test_downloader': 'full_folder'
     },
     {
+        'test_downloader': 'full_subfolder'
+    },
+    {
         'test_downloader': 'selected_files'
     }
 ]
@@ -62,16 +65,23 @@ def sharer(step):
     step(3, 'Create initial test files and directories')
 
     proc_name = reflection.getProcessName()
-    dir_name = "%s/%s" % (proc_name, 'localShareDir')
+    dir_name = os.path.join(proc_name, 'localShareDir')
     local_dir = make_workdir(dir_name)
+    subdir_dir = make_workdir(os.path.join(dir_name, 'subdir'))
 
     createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE1.txt'), '1', count=1000, bs=filesize_kb)
     createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE2.txt'), '2', count=1000, bs=filesize_kb)
     createfile(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE3.txt'), '3', count=1000, bs=filesize_kb)
+    createfile(os.path.join(subdir_dir, 'TEST_FILE_LINK_SHARE4.txt'), '4', count=1000, bs=filesize_kb)
+    createfile(os.path.join(subdir_dir, 'TEST_FILE_LINK_SHARE5.txt'), '5', count=1000, bs=filesize_kb)
+    createfile(os.path.join(subdir_dir, 'TEST_FILE_LINK_SHARE6.txt'), '6', count=1000, bs=filesize_kb)
     shared = reflection.getSharedObject()
     shared['MD5_TEST_FILE_LINK_SHARE1'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE1.txt'))
     shared['MD5_TEST_FILE_LINK_SHARE2'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE2.txt'))
     shared['MD5_TEST_FILE_LINK_SHARE3'] = md5sum(os.path.join(local_dir, 'TEST_FILE_LINK_SHARE3.txt'))
+    shared['MD5_TEST_FILE_LINK_SHARE4'] = md5sum(os.path.join(subdir_dir, 'TEST_FILE_LINK_SHARE4.txt'))
+    shared['MD5_TEST_FILE_LINK_SHARE5'] = md5sum(os.path.join(subdir_dir, 'TEST_FILE_LINK_SHARE5.txt'))
+    shared['MD5_TEST_FILE_LINK_SHARE6'] = md5sum(os.path.join(subdir_dir, 'TEST_FILE_LINK_SHARE6.txt'))
 
     list_files(d)
     run_ocsync(d, user_num=1)
@@ -175,6 +185,10 @@ def public_downloader_full_folder(step):
     expect_exists(os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE1.txt'))
     expect_exists(os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE2.txt'))
     expect_exists(os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE3.txt'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'subdir'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'subdir', 'TEST_FILE_LINK_SHARE4.txt'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'subdir', 'TEST_FILE_LINK_SHARE5.txt'))
+    expect_exists(os.path.join(unzip_target, 'localShareDir', 'subdir', 'TEST_FILE_LINK_SHARE6.txt'))
 
     expect_not_modified(
         os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE1.txt'),
@@ -187,6 +201,62 @@ def public_downloader_full_folder(step):
     expect_not_modified(
         os.path.join(unzip_target, 'localShareDir', 'TEST_FILE_LINK_SHARE3.txt'),
         shared['MD5_TEST_FILE_LINK_SHARE3']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'localShareDir', 'subdir', 'TEST_FILE_LINK_SHARE4.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE4']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'localShareDir', 'subdir', 'TEST_FILE_LINK_SHARE5.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE5']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'localShareDir', 'subdir', 'TEST_FILE_LINK_SHARE6.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE6']
+    )
+
+
+def public_downloader_full_subfolder(step):
+
+    step(2, 'Create workdir')
+    d = make_workdir()
+
+    step(5, 'Downloads and validate')
+
+    shared = reflection.getSharedObject()
+    url = oc_webdav_url(
+        remote_folder=os.path.join(
+            'index.php',
+            's',
+            shared['SHARE_LINK_TOKEN_TEST_DIR'],
+            'download?path=%2F&files=subdir'
+        ),
+        webdav_endpoint=config.oc_root
+    )
+
+    download_target = os.path.join(d, '%s%s' % (shared['SHARE_LINK_TOKEN_TEST_DIR'], '.zip'))
+    unzip_target = os.path.join(d, 'unzip')
+    runcmd('curl -v -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
+    runcmd('unzip -d %s %s' % (unzip_target, download_target))
+
+    list_files(d, recursive=True)
+
+    expect_exists(os.path.join(unzip_target, 'subdir'))
+    expect_exists(os.path.join(unzip_target, 'subdir', 'TEST_FILE_LINK_SHARE4.txt'))
+    expect_exists(os.path.join(unzip_target, 'subdir', 'TEST_FILE_LINK_SHARE5.txt'))
+    expect_exists(os.path.join(unzip_target, 'subdir', 'TEST_FILE_LINK_SHARE6.txt'))
+
+    expect_not_modified(
+        os.path.join(unzip_target, 'subdir', 'TEST_FILE_LINK_SHARE4.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE4']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'subdir', 'TEST_FILE_LINK_SHARE5.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE5']
+    )
+    expect_not_modified(
+        os.path.join(unzip_target, 'subdir', 'TEST_FILE_LINK_SHARE6.txt'),
+        shared['MD5_TEST_FILE_LINK_SHARE6']
     )
 
 
@@ -237,5 +307,7 @@ elif test_downloader == 'selected_single_files':
     add_worker(public_downloader_selected_single_files, name=test_downloader)
 elif test_downloader == 'full_folder':
     add_worker(public_downloader_full_folder, name=test_downloader)
+elif test_downloader == 'full_subfolder':
+    add_worker(public_downloader_full_subfolder, name=test_downloader)
 elif test_downloader == 'selected_files':
     add_worker(public_downloader_selected_files, name=test_downloader)
