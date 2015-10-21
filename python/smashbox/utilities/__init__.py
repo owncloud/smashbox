@@ -10,18 +10,18 @@ import time
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
-    return int(20*1024*1024*factor) # 20MB as of client 1.7 
+    return int(20*1024*1024*factor) # 20MB as of client 1.7
 
 
 ######## TEST SETUP AND PREPARATION
 
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
-    """ 
+    """
     Prepare the test account on the owncloud server (remote state). Run this once at the beginning of the test.
 
     The reset_procedure defines what actually happens. If not set then the config default oc_account_reset_procedure
     applies.
-    
+
     Normally the account is deleted and recreated ('delete')
 
     If reset_procedure is set to 'keep' than the account is not deleted, so the state from the previous run is kept.
@@ -52,7 +52,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
 
     if reset_procedure == 'webdav_delete':
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
-        webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
+        webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661)
 
     # if create if does not exist (for keep or webdav_delete options)
     webdav_mkcol('/')
@@ -61,7 +61,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
 def reset_rundir(reset_procedure=None):
     """ Prepare the run directory for the current test (local state). Run this once at the beginning of the test.
 
-    The reset_procedure defines what actually happens. If not set then the config default rundir_reset_procedure 
+    The reset_procedure defines what actually happens. If not set then the config default rundir_reset_procedure
     applies.
 
     Normally the run directory is deleted ('delete'). To keep the local run directory intact specify "keep".
@@ -81,8 +81,8 @@ def reset_rundir(reset_procedure=None):
 
 
 def make_workdir(name=None):
-    """ Create a worker directory in the current run directory for the test (by default the name is derived from 
-    the worker's name). 
+    """ Create a worker directory in the current run directory for the test (by default the name is derived from
+    the worker's name).
     """
     from smashbox.utilities import reflection
 
@@ -428,12 +428,12 @@ def hexdump(fn):
 
 
 def list_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x
     runcmd(cmd)
 
 
 def hexdump_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x
     runcmd(cmd)
 
 
@@ -470,7 +470,7 @@ def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
 
-    if not expr: 
+    if not expr:
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
         message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
