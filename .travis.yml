@@ -1,0 +1,17 @@
+language: python
+
+python:
+  - "2.7"
+
+branches:
+  only:
+    - master
+    - /^stable\d+(\.\d+)?$/
+
+matrix:
+  fast_finish: true
+
+script:
+
+  # Run smashbox tests
+  - ./travis/check-syntax.sh
