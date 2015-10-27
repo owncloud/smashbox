@@ -17,31 +17,40 @@ def move_non_existing_file(step):
     local_dir = make_workdir(dir_name)
 
     createfile(os.path.join(d, 'file1.txt'), '0', count=1000, bs=50)
-    createfile(os.path.join(local_dir, 'file2.txt'), '1', count=1000, bs=50)
+    createfile(os.path.join(local_dir, 'file3.txt'), '1', count=1000, bs=50)
     run_ocsync(d, user_num=1)
 
     expect_webdav_exist('file1.txt', user_num=1)
-    expect_webdav_exist(os.path.join('folder', 'file2.txt'), user_num=1)
+    expect_webdav_does_not_exist(os.path.join('folder', 'file2.txt'), user_num=1)
+    expect_webdav_exist(os.path.join('folder', 'file3.txt'), user_num=1)
 
     step(2, 'Move the file into the folder')
 
-    api = get_oc_api()
-    api.login("%s%i" % (config.oc_account_name, 1), config.oc_account_password)
+    oc = get_oc_api()
+    oc.login("%s%i" % (config.oc_account_name, 1), config.oc_account_password)
 
     try:
-        api.move('file1.txt', os.path.join('folder', 'file2.txt'))
+        oc.move('file1.txt', os.path.join('folder', 'file2.txt'))
     except HTTPResponseError as err:
         error_check(
             False,
             'Server replied with status code: %i' % err.status_code
         )
 
+    expect_webdav_does_not_exist('file1.txt', user_num=1)
+    expect_webdav_exist(os.path.join('folder', 'file2.txt'), user_num=1)
+    expect_webdav_exist(os.path.join('folder', 'file3.txt'), user_num=1)
+
     step(3, 'Move non existing file into the folder')
 
     try:
-        api.move('file1.txt', os.path.join('folder', 'file2.txt'))
+        oc.move('file1.txt', os.path.join('folder', 'file2.txt'))
     except HTTPResponseError as err:
         error_check(
             err.status_code == 404,
             'Server replied with status code: %i' % err.status_code
         )
+
+    expect_webdav_does_not_exist('file1.txt', user_num=1)
+    expect_webdav_exist(os.path.join('folder', 'file2.txt'), user_num=1)
+    expect_webdav_exist(os.path.join('folder', 'file3.txt'), user_num=1)
