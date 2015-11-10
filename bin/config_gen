@@ -6,7 +6,7 @@ exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
 pythonDir = os.path.join(os.path.dirname(exeDir), 'python' )
 sys.path.insert(0, pythonDir)
 etcDir = os.path.join(os.path.dirname(exeDir), 'etc')
-defaultTemplateFile = os.path.join(etcDir, 'smashbox.conf.template')
+defaultTemplateFile = os.path.join(etcDir, 'smashbox.conf.template-owncloud')
 defaultOutputFile = os.path.join(etcDir, 'smashbox.conf')
 
 import smashbox.configgen.generator as generator
