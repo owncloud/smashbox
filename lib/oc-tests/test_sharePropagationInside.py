@@ -40,7 +40,8 @@ __doc__ = """
 | 15    |                 |                | unshare           |             |                 |
 |       |                 |                |   -> /test/sub    |             |                 |
 +-------+-----------------+----------------+-------------------+-------------+-----------------+
-| 16    | NOT propagation | propagation    | NOT propagation   | propagation | propagation     |
+| 16    | NOT propagation | NOT            | NOT propagation   | NOT         | propagation     |
+|       |                 | propagation    |                   | propagation |                 |
 +-------+-----------------+----------------+-------------------+-------------+-----------------+
 """
 from smashbox.utilities import *
@@ -139,6 +140,7 @@ def owner(step):
     error_check(test_etag4 == test_etag5, 'recipient 2 unshares reshare '
                 'etag for /test previous [%s] new [%s]' % (test_etag4, test_etag5))
 
+@add_worker
 def recipient1(step):
 
     user = '%s%i' % (config.oc_account_name, 2)
@@ -197,11 +199,13 @@ def recipient1(step):
     step(16, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
     test_etag5 = client.file_info('/test').get_etag()
-    error_check(root_etag6 != root_etag7, 'recipient 2 unshares reshare '
+    # not affected by the unshare
+    error_check(root_etag6 == root_etag7, 'recipient 2 unshares reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
-    error_check(test_etag4 != test_etag5, 'recipient 2 unshares reshare '
+    error_check(test_etag4 == test_etag5, 'recipient 2 unshares reshare '
                 'etag for /test previous [%s] new [%s]' % (test_etag4, test_etag5))
 
+@add_worker
 def recipient2(step):
 
     user = '%s%i' % (config.oc_account_name, 3)
@@ -269,7 +273,7 @@ def recipient2(step):
                 'etag for /test previous [%s] new [%s]' % (test_etag3, test_etag4))
 
     step(15, 'Unshare reshared /test/sub')
-    client.delete_share(share_data2.share_id)
+    client.delete_share(share2_data.share_id)
 
     step(16, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
@@ -279,6 +283,7 @@ def recipient2(step):
     error_check(test_etag4 == test_etag5, 'recipient 2 unshares reshare '
                 'etag for /test previous [%s] new [%s]' % (test_etag4, test_etag5))
 
+@add_worker
 def recipient3(step):
 
     user = '%s%i' % (config.oc_account_name, 4)
@@ -332,11 +337,12 @@ def recipient3(step):
     step(16, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
     test_etag5 = client.file_info('/test').get_etag()
-    error_check(root_etag6 != root_etag7, 'recipient 2 unshares reshare '
+    error_check(root_etag6 == root_etag7, 'recipient 2 unshares reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
-    error_check(test_etag4 != test_etag5, 'recipient 2 unshares reshare '
+    error_check(test_etag4 == test_etag5, 'recipient 2 unshares reshare '
                 'etag for /test previous [%s] new [%s]' % (test_etag4, test_etag5))
 
+@add_worker
 def recipient4(step):
 
     user = '%s%i' % (config.oc_account_name, 5)
@@ -369,7 +375,7 @@ def recipient4(step):
     error_check(root_etag3 != root_etag4, 'owner uploads to /test/sub/test4.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag3, root_etag4))
     error_check(sub_etag != sub_etag2, 'owner uploads to /test/sub/test4.txt '
-                'etag for /test previous [%s] new [%s]' % (sub_etag, sub_etag2))
+                'etag for /sub previous [%s] new [%s]' % (sub_etag, sub_etag2))
 
     step(12, 'verify etag propagation')
     root_etag5 = client.file_info('/').get_etag()
@@ -377,7 +383,7 @@ def recipient4(step):
     error_check(root_etag4 != root_etag5, 'recipient 1 uploads to /test/sub/test5.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag4, root_etag5))
     error_check(sub_etag2 != sub_etag3, 'recipient 1 uploads to /test/sub/test5.txt '
-                'etag for /test previous [%s] new [%s]' % (sub_etag2, sub_etag3))
+                'etag for /sub previous [%s] new [%s]' % (sub_etag2, sub_etag3))
 
     step(13, 'Upload to /sub')
     run_ocsync(d, user_num=5)
@@ -394,9 +400,7 @@ def recipient4(step):
 
     step(16, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
-    sub_etag5 = client.file_info('/sub').get_etag()
     error_check(root_etag6 != root_etag7, 'recipient 2 unshares reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
-    error_check(sub_etag4 != sub_etag5, 'recipient 2 unshares reshare '
-                'etag for /test previous [%s] new [%s]' % (sub_etag4, sub_etag5))
+    # /sub folder should be deleted at this point, so no checking
 
