@@ -17,13 +17,13 @@ Test share etag propagation
 +-------------+-------------------------+-------------------------+----------------------+
 | 7           | unshare folder          |                         |                      |
 +-------------+-------------------------+-------------------------+----------------------+
-| 8           | verify propagation      | verify propagation      |                      |
+| 8           | verify etag is the same | verify propagation      |                      |
 +-------------+-------------------------+-------------------------+----------------------+
 | 9           | share folder with R2 R3 |                         |                      |
 +-------------+-------------------------+-------------------------+----------------------+
 | 10          |                         | R2 reshare with R4      |                      |
 +-------------+-------------------------+-------------------------+----------------------+
-| 11          | verify propagation      | verify propagation      | verify propagation   |
+| 11          | verify etag is the same | verify propagation      | verify propagation   |
 +-------------+-------------------------+-------------------------+----------------------+
 | 12          |                         | R2 upload in shared dir |                      |
 +-------------+-------------------------+-------------------------+----------------------+
@@ -35,7 +35,7 @@ Test share etag propagation
 +-------------+-------------------------+-------------------------+----------------------+
 | 16          |                         | R2 unshares folder      |                      |
 +-------------+-------------------------+-------------------------+----------------------+
-| 17          | verify etag is the same | verify propagation      | verify propagation   |
+| 17          | verify etag is the same | verify etag is the same | verify propagation   |
 +-------------+-------------------------+-------------------------+----------------------+
 """
 
@@ -90,8 +90,6 @@ def owner(step):
     fatal_check(share2_data, 'failed sharing a file with %s' % (user3,))
 
     root_etag = client.file_info('/').get_etag()
-    test_etag = client.file_info('/test').get_etag()
-    test_sub_etag = client.file_info('/test/sub').get_etag()
 
     step(3, 'Upload file')
     createfile(os.path.join(d, 'test', 'test.txt'), '1', count=1000, bs=10)
@@ -99,12 +97,12 @@ def owner(step):
 
     step(4, 'Verify etag propagation')
     root_etag2 = client.file_info('/').get_etag()
-    error_check(root_etag != root_etag2,
+    error_check(root_etag != root_etag2, 'owner uploads /test/test.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag, root_etag2))
 
     step(6, 'verify another etag propagation')
     root_etag3 = client.file_info('/').get_etag()
-    error_check(root_etag2 != root_etag3,
+    error_check(root_etag2 != root_etag3, 'recipients upload to /test/test2.txt'
                 'etag for / previous [%s] new [%s]' % (root_etag2, root_etag3))
 
     step(7, 'unshare')
@@ -113,7 +111,7 @@ def owner(step):
 
     step(8, 'verify etag propagation')
     root_etag4 = client.file_info('/').get_etag()
-    error_check(root_etag3 != root_etag4,
+    error_check(root_etag3 == root_etag4, 'owner unshares '
                 'etag for / previous [%s] new [%s]' % (root_etag3, root_etag4))
 
     step(9, 'share again the files')
@@ -124,23 +122,23 @@ def owner(step):
 
     step(11, 'verify etag propagation')
     root_etag5 = client.file_info('/').get_etag()
-    error_check(root_etag4 != root_etag5,
+    error_check(root_etag4 == root_etag5, 'recipient 2 reshares /test to recipient 4 '
                 'etag for / previous [%s] new [%s]' % (root_etag4, root_etag5))
 
     step(13, 'verify etag propagation')
     root_etag6 = client.file_info('/').get_etag()
-    error_check(root_etag5 != root_etag6,
+    error_check(root_etag5 != root_etag6, 'recipient 2 uploads to /test/test3.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag5, root_etag6))
 
     step(15, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
-    error_check(root_etag6 != root_etag7,
+    error_check(root_etag6 != root_etag7, 'recipient 4 uploads /test/test4.txt through reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
 
     step(17, 'verify etag is the same')
     root_etag8 = client.file_info('/').get_etag()
     # It shoudn't be propagated here in this case
-    error_check(root_etag7 == root_etag8,
+    error_check(root_etag7 == root_etag8, 'recipient 2 unshares the reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag7, root_etag8))
 
 def recipients(step):
@@ -161,7 +159,7 @@ def recipients(step):
     run_ocsync(d, user_num=usernum)
 
     root_etag2 = client.file_info('/').get_etag()
-    error_check(root_etag != root_etag2,
+    error_check(root_etag != root_etag2, 'owner uploads /test/test.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag, root_etag2))
 
     step(5, 'upload to shared folder')
@@ -170,12 +168,12 @@ def recipients(step):
 
     step(6, 'verify another etag propagation')
     root_etag3 = client.file_info('/').get_etag()
-    error_check(root_etag2 != root_etag3,
+    error_check(root_etag2 != root_etag3, 'recipients upload to /test/test2.txt'
                 'etag for / previous [%s] new [%s]' % (root_etag2, root_etag3))
 
     step(8, 'verify etag propagation')
     root_etag4 = client.file_info('/').get_etag()
-    error_check(root_etag3 != root_etag4,
+    error_check(root_etag3 != root_etag4, 'owner unshares '
                 'etag for / previous [%s] new [%s]' % (root_etag3, root_etag4))
 
     step(10, 'reshare file')
@@ -185,7 +183,7 @@ def recipients(step):
 
     step(11, 'verify etag propagation')
     root_etag5 = client.file_info('/').get_etag()
-    error_check(root_etag4 != root_etag5,
+    error_check(root_etag4 != root_etag5, 'recipient 2 reshares /test to recipient 4 '
                 'etag for / previous [%s] new [%s]' % (root_etag4, root_etag5))
 
     step(12, 'recipient 2 upload a file')
@@ -195,12 +193,12 @@ def recipients(step):
 
     step(13, 'verify etag propagation')
     root_etag6 = client.file_info('/').get_etag()
-    error_check(root_etag5 != root_etag6,
+    error_check(root_etag5 != root_etag6, 'recipient 2 uploads to /test/test3.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag5, root_etag6))
 
     step(15, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
-    error_check(root_etag6 != root_etag7,
+    error_check(root_etag6 != root_etag7, 'recipient 4 uploads /test/test4.txt through reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
 
     step(16, 'unshare file')
@@ -209,7 +207,8 @@ def recipients(step):
 
     step(17, 'verify etag propagation')
     root_etag8 = client.file_info('/').get_etag()
-    error_check(root_etag7 != root_etag8,
+    # recipients 2 and 3 aren't affected by the unshare
+    error_check(root_etag7 == root_etag8, 'recipient 2 unshares the reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag7, root_etag8))
 
 @add_worker
@@ -228,12 +227,12 @@ def recipient_4(step):
 
     step(11, 'verify etag propagation')
     root_etag5 = client.file_info('/').get_etag()
-    error_check(root_etag != root_etag5,
+    error_check(root_etag != root_etag5, 'recipient 2 reshares /test to recipient 4 '
                 'etag for / previous [%s] new [%s]' % (root_etag, root_etag5))
 
     step(13, 'verify etag propagation')
     root_etag6 = client.file_info('/').get_etag()
-    error_check(root_etag5 != root_etag6,
+    error_check(root_etag5 != root_etag6, 'recipient 2 uploads to /test/test3.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag5, root_etag6))
 
     step(14, 'upload file')
@@ -243,12 +242,12 @@ def recipient_4(step):
 
     step(15, 'verify etag propagation')
     root_etag7 = client.file_info('/').get_etag()
-    error_check(root_etag6 != root_etag7,
+    error_check(root_etag6 != root_etag7, 'recipient 4 uploads /test/test4.txt through reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
 
     step(17, 'verify etag propagation')
     root_etag8 = client.file_info('/').get_etag()
-    error_check(root_etag7 != root_etag8,
+    error_check(root_etag7 != root_etag8, 'recipient 2 unshares the reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag7, root_etag8))
 
 for i in range(2,4):
