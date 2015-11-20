@@ -37,12 +37,15 @@ Test share etag propagation
 +-------------+-------------------------+-------------------------+----------------------+
 | 17          | verify etag is the same | verify etag is the same | verify propagation   |
 +-------------+-------------------------+-------------------------+----------------------+
+
+Remove the sleep(x) once https://github.com/owncloud/client/issues/4160 has a resolution
 """
 
 from smashbox.utilities import *
 import itertools
 import os.path
 import re
+import time
 
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
@@ -93,6 +96,7 @@ def owner(step):
 
     step(3, 'Upload file')
     createfile(os.path.join(d, 'test', 'test.txt'), '1', count=1000, bs=10)
+    time.sleep(3)
     run_ocsync(d, user_num=1)
 
     step(4, 'Verify etag propagation')
@@ -164,6 +168,7 @@ def recipients(step):
 
     step(5, 'upload to shared folder')
     createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
+    time.sleep(3)
     run_ocsync(d, user_num=usernum)
 
     step(6, 'verify another etag propagation')
@@ -189,6 +194,7 @@ def recipients(step):
     step(12, 'recipient 2 upload a file')
     if usernum is 2:
         createfile(os.path.join(d, 'test', 'test3.txt'), '3', count=1000, bs=10)
+        time.sleep(3)
         run_ocsync(d, user_num=usernum)
 
     step(13, 'verify etag propagation')
@@ -238,6 +244,7 @@ def recipient_4(step):
     step(14, 'upload file')
     run_ocsync(d, user_num=usernum)
     createfile(os.path.join(d, 'test', 'test4.txt'), '4', count=1000, bs=10)
+    time.sleep(3)
     run_ocsync(d, user_num=usernum)
 
     step(15, 'verify etag propagation')
