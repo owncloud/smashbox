@@ -95,6 +95,7 @@ def owner(step):
 
     step(5, 'Upload to /test')
     createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
+    time.sleep(3)
     run_ocsync(d, user_num=1)
 
     step(6, 'verify etag propagation')
