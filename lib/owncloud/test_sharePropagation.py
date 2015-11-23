@@ -106,7 +106,7 @@ def owner(step):
 
     step(6, 'verify another etag propagation')
     root_etag3 = client.file_info('/').get_etag()
-    error_check(root_etag2 != root_etag3, 'recipients upload to /test/test2.txt'
+    error_check(root_etag2 != root_etag3, 'recipients upload to /test/test2.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag2, root_etag3))
 
     step(7, 'unshare')
@@ -167,9 +167,10 @@ def recipients(step):
                 'etag for / previous [%s] new [%s]' % (root_etag, root_etag2))
 
     step(5, 'upload to shared folder')
-    createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
-    time.sleep(3)
-    run_ocsync(d, user_num=usernum)
+    if usernum is 2:
+        createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
+        time.sleep(3)
+        run_ocsync(d, user_num=usernum)
 
     step(6, 'verify another etag propagation')
     root_etag3 = client.file_info('/').get_etag()
