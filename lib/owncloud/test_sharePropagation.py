@@ -37,8 +37,6 @@ Test share etag propagation
 +-------------+-------------------------+-------------------------+----------------------+
 | 17          | verify etag is the same | verify etag is the same | verify propagation   |
 +-------------+-------------------------+-------------------------+----------------------+
-
-Remove the sleep(x) once https://github.com/owncloud/client/issues/4160 has a resolution
 """
 
 from smashbox.utilities import *

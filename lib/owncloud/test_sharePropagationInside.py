@@ -43,8 +43,6 @@ __doc__ = """
 | 16    | NOT propagation | NOT            | NOT propagation   | NOT         | propagation     |
 |       |                 | propagation    |                   | propagation |                 |
 +-------+-----------------+----------------+-------------------+-------------+-----------------+
-
-Remove the sleep(x) once https://github.com/owncloud/client/issues/4160 has a resolution
 """
 from smashbox.utilities import *
 import itertools
