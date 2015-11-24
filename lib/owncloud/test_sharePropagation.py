@@ -45,7 +45,6 @@ from smashbox.utilities import *
 import itertools
 import os.path
 import re
-import time
 
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
@@ -58,8 +57,8 @@ def parse_worker_number(worker_name):
 def setup(step):
 
     step(1, 'create test users')
-    reset_owncloud_account(num_test_users=5)
-    check_users(5)
+    reset_owncloud_account(num_test_users=4)
+    check_users(4)
 
     reset_rundir()
     reset_server_log_file()
@@ -96,7 +95,6 @@ def owner(step):
 
     step(3, 'Upload file')
     createfile(os.path.join(d, 'test', 'test.txt'), '1', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=1)
 
     step(4, 'Verify etag propagation')
@@ -169,7 +167,6 @@ def recipients(step):
     step(5, 'upload to shared folder')
     if usernum is 2:
         createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
-        time.sleep(3)
         run_ocsync(d, user_num=usernum)
 
     step(6, 'verify another etag propagation')
@@ -195,7 +192,6 @@ def recipients(step):
     step(12, 'recipient 2 upload a file')
     if usernum is 2:
         createfile(os.path.join(d, 'test', 'test3.txt'), '3', count=1000, bs=10)
-        time.sleep(3)
         run_ocsync(d, user_num=usernum)
 
     step(13, 'verify etag propagation')
@@ -245,7 +241,6 @@ def recipient_4(step):
     step(14, 'upload file')
     run_ocsync(d, user_num=usernum)
     createfile(os.path.join(d, 'test', 'test4.txt'), '4', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=usernum)
 
     step(15, 'verify etag propagation')

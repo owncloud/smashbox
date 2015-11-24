@@ -50,7 +50,6 @@ from smashbox.utilities import *
 import itertools
 import os.path
 import re
-import time
 
 @add_worker
 def setup(step):
@@ -95,7 +94,6 @@ def owner(step):
 
     step(5, 'Upload to /test')
     createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=1)
 
     step(6, 'verify etag propagation')
@@ -110,7 +108,6 @@ def owner(step):
 
     step(9, 'Upload to /test/sub')
     createfile(os.path.join(d, 'test', 'sub', 'test4.txt'), '4', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=1)
 
     step(10, 'verify etag propagation')
@@ -183,7 +180,6 @@ def recipient1(step):
     step(11, 'Upload to /test/sub')
     run_ocsync(d, user_num=2)
     createfile(os.path.join(d, 'test', 'sub', 'test5.txt'), '5', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=2)
 
     step(12, 'verify etag propagation')
@@ -247,7 +243,6 @@ def recipient2(step):
     step(7, 'Upload to /test')
     run_ocsync(d, user_num=3)
     createfile(os.path.join(d, 'test', 'test3.txt'), '3', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=3)
 
     step(8, 'verify etag propagation')
@@ -395,7 +390,6 @@ def recipient4(step):
     step(13, 'Upload to /sub')
     run_ocsync(d, user_num=5)
     createfile(os.path.join(d, 'sub', 'test6.txt'), '6', count=1000, bs=10)
-    time.sleep(3)
     run_ocsync(d, user_num=5)
 
     step(14, 'verify etag propagation')
