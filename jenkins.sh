@@ -245,8 +245,13 @@ else
 		bin/smash --debug $TESTSET lib/oc-tests/${TEST_NAME}.py
 		RESULT=$?
 	else
-		echo Test case ${TEST_NAME} not found!
-		exit 3
+		if [ -f "lib/owncloud/${TEST_NAME}.py" ]; then
+			bin/smash --debug $TESTSET lib/owncloud/${TEST_NAME}.py
+			RESULT=$?
+		else
+			echo Test case ${TEST_NAME} not found!
+			exit 3
+		fi
 	fi
 fi
 exit $RESULT
