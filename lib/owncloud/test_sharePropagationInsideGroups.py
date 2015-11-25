@@ -92,21 +92,23 @@ def run_group_ocsync(d, group_name):
 def setup(step):
 
     step(1, 'create test users')
-    reset_owncloud_account(num_test_users=9)
+    num_users = 9
+
+    # Create additional accounts
+    if config.oc_number_test_users < num_users:
+            for i in range(config.oc_number_test_users + 1, num_users + 1):
+                username = "%s%i" % (config.oc_account_name, i)
+                delete_owncloud_account(username)
+                create_owncloud_account(username, config.oc_account_password)
+                login_owncloud_account(username, config.oc_account_password)
+
+    check_users(num_users)
     reset_owncloud_group(num_groups=4)
-    check_users(9)
 
     for group in group_map:
         for user in group_map[group]:
             add_user_to_group(get_account_name(user), group)
 
-    reset_rundir()
-    reset_server_log_file()
-
-    step(17, 'Validate server log file is clean')
-
-    d = make_workdir()
-    scrape_log_file(d)
 
 @add_worker
 def owner(step):
@@ -115,7 +117,6 @@ def owner(step):
     step (2, 'Create workdir')
     d = make_workdir()
 
-    mkdir(os.path.join(d, 'test'))
     mkdir(os.path.join(d, 'test', 'sub'))
     run_ocsync(d, user_num=1)
 
