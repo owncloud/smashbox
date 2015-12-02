@@ -81,7 +81,7 @@ if [ "$TEST_NAME" == "litmus" ]; then
 	    exit 1
 	fi
 	echo "litmus succeeded! WebDAV working properly!"
-    exit 1
+    exit 0
 fi
 
 #
