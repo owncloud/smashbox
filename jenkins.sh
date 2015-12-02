@@ -73,13 +73,16 @@ curl http://$HOST/status.php
 #
 # litmus to see if the system is up
 #
-litmus -k http://${HOST}/remote.php/webdav $ADMIN_USER $ADMIN_PASS | tee litmus.out || true
-more litmus.out | grep -a -v high-unicode | grep -a FAIL | tee fail.txt
-if test -s fail.txt ; then
-	echo "litmus did fail! WebDAV not working properly! Aborting!"
+if [ "$TEST_NAME" == "litmus" ]; then
+	litmus -k http://${HOST}/remote.php/webdav $ADMIN_USER $ADMIN_PASS | tee litmus.out || true
+	more litmus.out | grep -a -v high-unicode | grep -a FAIL | tee fail.txt
+	if test -s fail.txt ; then
+		echo "litmus did fail! WebDAV not working properly! Aborting!"
+	    exit 1
+	fi
+	echo "litmus succeeded! WebDAV working properly!"
     exit 1
 fi
-echo "litmus succeeded! WebDAV working properly!"
 
 #
 # create the config file
