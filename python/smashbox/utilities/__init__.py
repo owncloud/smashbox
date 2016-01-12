@@ -7,6 +7,72 @@ import time
 
 # Utilities to be used in the test-cases.
 
+
+def compare_oc_version(compare_to, operator):
+    """
+
+    :param compare_to: E.g. '9.0'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :return:
+    """
+    oc_api = get_oc_api()
+    url = oc_api.url + 'status.php'
+    rtn_code, std_out, std_err = runcmd('curl %s' % url, log_warning=False)
+
+    import json
+    version = (json.loads(std_out))['version']
+
+    return compare_version(compare_to, operator, version)
+
+
+def compare_client_version(compare_to, operator):
+    """
+
+    :param compare_to: E.g. '2.1'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :return:
+    """
+
+    cmd = config.oc_sync_cmd
+    cmd = cmd[:cmd.find(' --')]
+    cmd += ' --version'
+    rtn_code, std_out, std_err = runcmd(cmd)
+
+    version = std_out[std_out.find(' version ') + 9:]
+    if version[-4:-1] == 'git':
+        version = version[:-4]
+
+    return compare_version(compare_to, operator, version)
+
+
+def compare_version(compare_to, operator, version):
+    """
+
+    :param compare_to: E.g. '9.0'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :param version: E.g. '9.0'
+    :return:
+    """
+
+    if operator == '<':
+        return versiontuple(version) < versiontuple(compare_to)
+    if operator == '>':
+        return versiontuple(version) > versiontuple(compare_to)
+    if operator == '<=':
+        return versiontuple(version) <= versiontuple(compare_to)
+    if operator == '>=':
+        return versiontuple(version) >= versiontuple(compare_to)
+    if operator == '=':
+        compare_tuple = versiontuple(compare_to)
+        return versiontuple(version)[0:len(compare_tuple)] == compare_tuple
+
+    raise ValueError('Invalid operator')
+
+
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))
+
+
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
@@ -641,8 +707,8 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
         logger.info('share id for file share is %s', str(share_info.share_id))
         return share_info.share_id
     except ResponseError as err:
-        logger.info('Share failed with %s', str(err))
-        if "not allowed to share" in str(err.get_resource_body()):
+        logger.info('Share failed with %s - %s', str(err), str(err.get_resource_body()))
+        if err.status_code == 403 or err.status_code == 404:
             return -1
         else:
             return -2
