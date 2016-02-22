@@ -209,9 +209,12 @@ def sharee_one(step):
     run_ocsync(d, user_num=2)
     list_files(d)
 
+    # May seem weird, but that is the current behaviour. The file is still there locally,
+    # but on the server the entry is a StorageNotAvailable exception, so webdav exists should not pass.
     shared_file = os.path.join(d, 'TEST_FILE_USER_SHARE.dat')
-    logger.info('Checking that %s is not present in sharee local directory', shared_file)
-    expect_does_not_exist(shared_file)
+    logger.info('Checking that %s is present in sharee locally but not on webdav directory', shared_file)
+    expect_exists(shared_file)
+    expect_webdav_does_not_exist(shared_file, user_num=2)
 
     step(14, 'Sharee One final step')
 
@@ -250,8 +253,11 @@ def sharee_two(step):
     run_ocsync(d, user_num=3)
     list_files(d)
 
+    # May seem weird, but that is the current behaviour. The file is still there locally,
+    # but on the server the entry is a StorageNotAvailable exception, so webdav exists should not pass.
     shared_file = os.path.join(d, 'TEST_FILE_USER_RESHARE.dat')
-    logger.info('Checking that %s is not present in sharee local directory', shared_file)
-    expect_does_not_exist(shared_file)
+    logger.info('Checking that %s is present in sharee locally but not on webdav directory', shared_file)
+    expect_exists(shared_file)
+    expect_webdav_does_not_exist(shared_file, user_num=3)
 
     step(14, 'Sharee Two final step')
