@@ -57,6 +57,7 @@ Data Providers:
 """
 
 from smashbox.utilities import *
+from smashbox.owncloudorg.remote_sharing import *
 
 OCS_PERMISSION_READ = 1
 OCS_PERMISSION_UPDATE = 2
@@ -106,14 +107,14 @@ def sharer(step):
     user1 = "%s%i" % (config.oc_account_name, 1)
     user2 = "%s%i" % (config.oc_account_name, 2)
 
-    kwargs = {'perms': sharePermissions, 'remote_user': True}
-    shared['TEST_FILE_USER_SHARE'] = share_file_with_user(
+    kwargs = {'perms': sharePermissions}
+    shared['TEST_FILE_USER_SHARE'] = remote_share_file_with_user(
         'TEST_FILE_USER_SHARE.dat', user1, user2, **kwargs
     )
-    shared['TEST_FILE_USER_RESHARE'] = share_file_with_user(
+    shared['TEST_FILE_USER_RESHARE'] = remote_share_file_with_user(
         'TEST_FILE_USER_RESHARE.dat', user1, user2, **kwargs
     )
-    shared['TEST_FILE_MODIFIED_USER_SHARE'] = share_file_with_user(
+    shared['TEST_FILE_MODIFIED_USER_SHARE'] = remote_share_file_with_user(
         'TEST_FILE_MODIFIED_USER_SHARE.dat', user1, user2, **kwargs
     )
     shared['sharer.TEST_FILE_MODIFIED_USER_SHARE'] = os.path.join(d, 'TEST_FILE_MODIFIED_USER_SHARE.dat')
@@ -189,8 +190,8 @@ def sharee_one(step):
 
     user2 = "%s%i" % (config.oc_account_name, 2)
     user3 = "%s%i" % (config.oc_account_name, 3)
-    kwargs = {'perms': sharePermissions, 'remote_user': True}
-    result = share_file_with_user('TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
+    kwargs = {'perms': sharePermissions}
+    result = remote_share_file_with_user('TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
 
     if not sharePermissions & OCS_PERMISSION_SHARE:
         error_check(result == -1, "shared and shouldn't have")
