@@ -33,6 +33,26 @@ class LockProvider:
         except owncloud.ResponseError as err:
             raise err
 
+    def isUsingDBLocking(self):
+        try:
+            kwargs = {'accepted_codes': [100, 501, 999]}
+            res = self.oc_api.make_ocs_request(
+                'GET',
+                'apps/testing/api/v1',
+                'lockprovisioning',
+                **kwargs
+            )
+
+            import xml.etree.ElementTree as ET
+            tree = ET.fromstring(res.content)
+            code_el = tree.find('meta/statuscode')
+
+            return int(code_el.text) == 100
+
+        except owncloud.ResponseError as err:
+            raise err
+
+
     def lock(self, lock_level, user, path):
         """
         Lock the path for the given user

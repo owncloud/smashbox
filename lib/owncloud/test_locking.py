@@ -111,13 +111,27 @@ original_cmd = config.oc_sync_cmd
 @add_worker
 def owner_worker(step):
 
-    step(2, 'Create workdir')
-    d = make_workdir()
+    if compare_client_version('2.1.1', '<='):
+        # The client has a bug with permissions of folders on the first sync before 2.1.2
+        logger.warning('Skipping test, because the client version is known to behave incorrectly')
+        return
+
+    if compare_oc_version('9.0', '<='):
+        # The server has no fake locking support
+        logger.warning('Skipping test, because the server has no fake locking support')
+        return
 
     oc_api = get_oc_api()
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
     lock_provider = LockProvider(oc_api)
     lock_provider.enable_testing_app()
+
+    if not lock_provider.isUsingDBLocking():
+        logger.warning('Skipping test, because DB Locking is not enabled or lock provisioning is not supported')
+        return
+
+    step(2, 'Create workdir')
+    d = make_workdir()
 
     from owncloud import OCSResponseError
     try:
