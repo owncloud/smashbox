@@ -1,6 +1,6 @@
 import re
 
-from smashbox.ocutilities.locking import *
+from smashbox.owncloudorg.locking import *
 from smashbox.utilities import *
 import os
 import signal
