@@ -60,6 +60,11 @@ ALL_OPERATIONS = [
     'move_out',
     # move a file out of a subdir of the shared folder into the shared folder
     'move_out_subdir',
+    # copy a file from outside the shared folder into the shared folder
+    'copy_in',
+    # copy a file from outside the shared folder and overwrite a file inside the shared folder
+    # (note: SabreDAV automatically deletes the target file first before copying, so requires DELETE permission too)
+    'copy_in_overwrite',
     # delete a file inside the shared folder
     'delete',
     # create folder inside the shared folder
@@ -87,6 +92,8 @@ testsets = [{
                 'move_in_subdir_overwrite',
                 'move_out',
                 'move_out_subdir',
+                'copy_in',
+                'copy_in_overwrite',
                 'delete',
                 'mkdir',
                 'rmdir',
@@ -103,6 +110,7 @@ testsets = [{
             'allowed_operations': [
                 'upload',
                 'move_in',
+                'copy_in',
                 'mkdir',
             ]
         }
@@ -131,6 +139,7 @@ testsets = [{
                 'upload_overwrite',
                 'rename',
                 'move_in',
+                'copy_in',
                 'mkdir',
             ]
         }
@@ -145,6 +154,8 @@ testsets = [{
                 'move_in_subdir_overwrite',
                 'move_out',
                 'move_out_subdir',
+                'copy_in',
+                'copy_in_overwrite',
                 'delete',
                 'mkdir',
                 'rmdir',
@@ -306,8 +317,25 @@ class OperationsTest(object):
             log_response_error(e)
             return False
 
-        if self._file_exists(source_file) or not self._file_exists(target_file):
-            logger.error('%s not actually moved renamed to %s', source_file, target_file)
+        if not self._file_exists(target_file):
+            logger.error('%s not actually moved to %s', source_file, target_file)
+            return False
+
+        return expected_success
+
+    def _copy(self, source_file, target_file, expected_success):
+        try:
+            logger.info('Copy "%s" to "%s"', source_file, target_file)
+            self.oc.copy(source_file, target_file)
+        except owncloud.ResponseError as e:
+            if e.status_code == 403:
+                return not expected_success
+
+            log_response_error(e)
+            return False
+
+        if not self._file_exists(target_file):
+            logger.error('%s not actually copied to %s', source_file, target_file)
             return False
 
         return expected_success
@@ -340,6 +368,30 @@ class OperationsTest(object):
         source_file = target_file
         target_file = os.path.join(self.shared_dir, target_file)
         return self._move(source_file, target_file, expected_success)
+
+    def copy_in(self, expected_success = False):
+        test_file = self._make_test_file()
+        target_file = 'test_copy_in.dat'
+
+        # upload the test file outside the shared dir first
+        self.oc.put_file(target_file, test_file)
+
+        # then copy that one into the shared dir
+        source_file = target_file
+        target_file = os.path.join(self.shared_dir, source_file)
+        return self._copy(source_file, target_file, expected_success)
+
+    def copy_in_overwrite(self, expected_success = False):
+        test_file = self._make_test_file()
+        target_file = 'overwrite_this_through_copy_in.dat'
+
+        # upload the test file outside the shared dir first
+        self.oc.put_file(target_file, test_file)
+
+        # then copy that one into the shared dir
+        source_file = target_file
+        target_file = os.path.join(self.shared_dir, target_file)
+        return self._copy(source_file, target_file, expected_success)
 
     def move_in_subdir(self, expected_success = False):
         source_file = os.path.join(self.shared_dir, 'move_this_to_subdir.dat')
