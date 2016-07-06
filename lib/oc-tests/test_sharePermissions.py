@@ -211,6 +211,7 @@ def owner_worker(step):
     createfile(os.path.join(d, SHARED_DIR_NAME, 'rename_this.dat'),'0',count=1000,bs=1)
     createfile(os.path.join(d, SHARED_DIR_NAME, 'overwrite_this.dat'),'0',count=1000,bs=1)
     createfile(os.path.join(d, SHARED_DIR_NAME, 'overwrite_this_through_move_in.dat'),'0',count=1000,bs=1)
+    createfile(os.path.join(d, SHARED_DIR_NAME, 'overwrite_this_through_copy_in.dat'),'0',count=1000,bs=1)
     createfile(os.path.join(d, SHARED_DIR_NAME, 'delete_this.dat'),'0',count=1000,bs=1)
 
     createfile(os.path.join(d, SHARED_DIR_NAME, 'delete_this_dir', 'stuff.dat'),'0',count=1000,bs=1)
