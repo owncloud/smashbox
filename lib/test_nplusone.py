@@ -12,6 +12,7 @@ from smashbox.utilities.monitoring import push_to_monitoring
 
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
+measurement = config.get('monitoring_push',"cernbox.cboxsls")
 
 # optional fs check before files are uploaded by worker0
 fscheck = config.get('nplusone_fscheck',False)
@@ -97,12 +98,11 @@ def worker0(step):
     step(4,"Final report")
 
     time1 = time.time()
-    push_to_monitoring("cernbox.cboxsls.nplusone.nfiles",nfiles)
-    push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone.elapsed",time1-time0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone.transfer_rate",total_size/(time1-time0))
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker0.synced_files",k1-k0)
+    push_to_monitoring("%s.nplusone.nfiles"%measurement,nfiles)
+    push_to_monitoring("%s.nplusone.total_size"%measurement,total_size)
+    push_to_monitoring("%s.nplusone.elapsed"%measurement,time1-time0)
+    push_to_monitoring("%s.nplusone.transfer_rate"%measurement,total_size/(time1-time0))
+    push_to_monitoring("%s.nplusone.worker0.synced_files"%measurement,k1-k0)
 
         
 @add_worker
@@ -119,8 +119,8 @@ def worker1(step):
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
 
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker1.synced_files",k1-k0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker1.cor",ncorrupt)
+    push_to_monitoring("%s.nplusone.worker1.synced_files"%measurement,k1-k0)
+    push_to_monitoring("%s.nplusone.worker1.cor"%measurement,ncorrupt)
                        
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 

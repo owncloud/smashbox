@@ -154,7 +154,13 @@ Local working directories keep temporary files, local sync folders, etc. General
 Server test accounts follow this general naming scheme (some elements may be ommited, others may be transformed) ::
 
     smash-<runid>-<collection>-<testname>
-   
+
+Reporting to monitoring database
+=========================================
+To use export of the test results to the monitoring node use e.g.:
+URL_OF_HOST=localhost
+$MEASUREMENT_GRAPHITE_PATH=smashbox
+bin/smash -o monitoring_host=$URL_OF_HOST -o monitoring_push=$MEASUREMENT_GRAPHITE_PATH -o nplusone_filesize=100000 -o nplusone_nfiles=10 lib/test_nplusone.py
 
 Organization of test directories
 ----------------
