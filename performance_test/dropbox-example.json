@@ -1,0 +1,26 @@
+{
+    "engine": {
+        "value": "dropbox",
+        "type": "None"
+    },
+    "server_name": {
+        "value": "dropbox",
+        "type": "None"
+    },
+    "monitoring_push": {
+        "value": "smashbox",
+        "type": "None"
+    },
+    "monitoring_host": {
+        "value": "nue-t1",
+        "type": "None"
+    },
+    "monitoring_port": {
+        "value": "2003",
+        "type": "int"
+    },
+    "runid": {
+        "value": "testrun",
+        "type": "None"
+    }
+}

@@ -167,8 +167,13 @@ class RequiredKeysProcessor(BasicProcessor):
                 self._notify_all(self.EVENT_KEY_MODIFIED, {'key': real_key, 'value': value})
             else:
                 if not real_key in config_dict:
-                    raise ProcessorException(ProcessorException.REQUIRED_KEY_MISSING,
+                    if default_value is None:
+                        raise ProcessorException(ProcessorException.REQUIRED_KEY_MISSING,
                                             'required key is missing')
+                    else:
+                        config_dict[real_key] = default_value
+
+
 
         self._notify_all(self.EVENT_PROCESS_FINISH, None)
 
