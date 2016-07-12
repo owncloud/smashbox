@@ -1,0 +1,97 @@
+{
+    "engine": {
+        "type": "None",
+        "value": "owncloud",
+        "_DESCRIPTION": "Specify which synchronisation method to use"
+    },
+    "oc_admin_user": {
+        "type": "None",
+        "value": "admin",
+        "_DESCRIPTION": "Specify the admin user of the ownCloud installation"
+    },
+    "oc_admin_password": {
+        "type": "None",
+        "value": "admin",
+        "_DESCRIPTION": "Specify the admin password of the ownCloud installation"
+    },
+    "monitoring_push": {
+        "type": "None",
+        "value": "test",
+        "_DESCRIPTION": "Specify the name of your database"
+    },
+    "monitoring_type": {
+        "type": "None",
+        "value": "influxdb",
+        "_DESCRIPTION": "Specify the type of your database"
+    },
+    "monitoring_host": {
+        "type": "None",
+        "value": "172.18.16.192",
+        "_DESCRIPTION": "Specify the ip address of the database"
+    },
+    "monitoring_port": {
+        "type": "int",
+        "value": "8086",
+        "_DESCRIPTION": "Specify port of the database"
+    },
+    "monitoring_user": {
+        "type": "None",
+        "value": "smashbox",
+        "_DESCRIPTION": "Specify user for the access to the database"
+    },
+    "monitoring_password": {
+        "type": "None",
+        "value": "smashbox",
+        "_DESCRIPTION": "Specify password for the access to the database"
+    },
+    "monitoring_type": {
+        "type": "None",
+        "value": "influxdb",
+        "_DESCRIPTION": "Specify type of the database used [currently influxdb or graphite]"
+    },
+    "oc_server": {
+        "type": "None",
+        "value": "172.18.16.141",
+        "_DESCRIPTION": "Specify the ip address of target server"
+    },
+    "server_name": {
+        "type": "None",
+        "value": "oc-stable-9-1",
+        "_DESCRIPTION": "Give the alias for you server. Do not use DOTS in case of graphite database!"
+    },
+    "oc_ssl_enabled": {
+        "type": "bool",
+        "value": "False",
+        "_DESCRIPTION": "Specify if server uses ssl for connections"
+    },
+    "oc_webdav_endpoint": {
+        "type": "None",
+        "value": "owncloud/remote.php/webdav",
+        "_DESCRIPTION": "[default] Specify the path to webdav for your server"
+    },
+    "oc_account_password": {
+        "type": "None",
+        "value": "test",
+        "_DESCRIPTION": "Specify what password should have your automaticaly created test account"
+    },
+    "oc_sync_cmd": {
+        "type": "None",
+        "value": "/home/mrow4a/Projects/build-client/bin/owncloudcmd --trust",
+        "_DESCRIPTION": "Specify sync binary for your client"
+    },
+    "runid": {
+        "type": "None",
+        "value": "2016-09-08",
+        "_DESCRIPTION": "Specify the identification for the test. Do not use DOTS in case of graphite database! Could be also set using json-config-daily-update script (documentation in github repository)"
+    },
+    "oc_account_reset_procedure": {
+        "type": "None",
+        "value": "delete",
+        "_DESCRIPTION": "[default] Specify the method of user creation/deletion"
+    },
+    "oc_number_test_users": {
+        "type": "int",
+        "value": "0",
+        "_DESCRIPTION": "[default for the test_gen_nplusone.py] Specify the number of users in this test"
+    }
+}

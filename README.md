@@ -21,7 +21,14 @@ The goal of this is to:
 If you think you see a bug - write a test-case and let others
 reproduce it on their systems.
 
-This is work in progress. 
+This is work in progress.
+
+Performance branch
+========
+
+Smashbox performance branch, used for automated performance tests of ownCloud/Dropbox/Seafile instances, client is using [test_gen_nplusone.py](performance_test/test_gen_nplusone.py) test
+
+For the smashbox performance HOWTO documentation, please refer to [documentation](performance_test/README.md) and learn more!
 
 Project tree
 ============
@@ -154,7 +161,6 @@ Local working directories keep temporary files, local sync folders, etc. General
 Server test accounts follow this general naming scheme (some elements may be ommited, others may be transformed) ::
 
     smash-<runid>-<collection>-<testname>
-   
 
 Organization of test directories
 ----------------
