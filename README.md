@@ -21,7 +21,29 @@ The goal of this is to:
 If you think you see a bug - write a test-case and let others
 reproduce it on their systems.
 
-This is work in progress. 
+This is work in progress.
+
+Performance branch
+========
+
+Smashbox performance branch, used for automated performance tests of ownCloud/Dropbox/Seafile instances, client is using [test_gen_nplusone.py](performance_test/test_gen_nplusone.py) test
+
+Smashbox default tests are mostly designed to check client and server in various complex and usually rare synchronisation scenarious, testing both synchronisation algorithm on the client and server code/configuration.
+
+Currently smashbox also supports some performance tests:
+
+* lib/test)userload.py: 1 uploader sync to the account and in parallel 5 downloaders start syncing down the changes from that account.
+
+
+* lib/test_nplusone.py: this test is using one uploader in one downloader to the client. This test is typical load generator
+
+
+* lib/test_storm.py: 10 uploaders sync to the same account at the same time, and after that 10 users sync down the change from the same account
+- above test is stress testing the server ability to sync from many clients to the same account.
+- this test is not frequent sync scenario since user would need to have 10 separate client and add files to them at the same time.
+
+
+For the smashbox performance HOWTO documentation, please refer to [documentation](performance_test/README.md) and learn more!
 
 Project tree
 ============
@@ -154,7 +176,13 @@ Local working directories keep temporary files, local sync folders, etc. General
 Server test accounts follow this general naming scheme (some elements may be ommited, others may be transformed) ::
 
     smash-<runid>-<collection>-<testname>
-   
+
+Reporting to monitoring database
+=========================================
+To use export of the test results to the monitoring node use e.g.:
+URL_OF_HOST=localhost
+$MEASUREMENT_GRAPHITE_PATH=smashbox
+bin/smash -o monitoring_host=$URL_OF_HOST -o monitoring_push=$MEASUREMENT_GRAPHITE_PATH -o nplusone_filesize=100000 -o nplusone_nfiles=10 lib/test_nplusone.py
 
 Organization of test directories
 ----------------
