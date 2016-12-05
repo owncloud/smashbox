@@ -13,7 +13,6 @@ For each Nth file, following steps will be executed:
 #STEP 6: ShareReceiver:  Log the execution in following format: Number of files - Filesize - PROPFIND&GET duration
 
 cat oc-stable-9-0/log-test_nSharedFiles.log | grep SYNC-SHARE | grep -oP '5-1000=\K.*'
-
 """
 
 OCS_PERMISSION_READ = 1
