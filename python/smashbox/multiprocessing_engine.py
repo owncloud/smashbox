@@ -47,7 +47,7 @@ class _smash_:
 
     # this is a hardcoded maximum number of steps
     N_STEPS = 100
-    
+
     workers = []
 
     class SmashSharedObject:
@@ -113,16 +113,22 @@ class _smash_:
         if _smash_.DEBUG:
             log('start',_smash_.supervisor_step.value,_smash_.steps)
 
+        _smash_.N_STEPS = max(
+            int(config.get('smashbox_steps_limit', -1)), #this can be configured using [-o smashbox_steps_limit=N]
+            _smash_.N_STEPS)
+
+        #print "N_STEPS=" + str(_smash_.N_STEPS)
+
         while _smash_.supervisor_step.value < _smash_.N_STEPS-1:
             while 1:
                 time.sleep(0.01)
                 #print [s for s in steps]
                 passed = all([_smash_.steps[i]>_smash_.supervisor_step.value for i in range(len(_smash_.steps))])
-                #print 'passed',supervisor_step.value,passed
+                #print 'passed',_smash_.supervisor_step.value,passed
                 if passed:
                     break
 
-            #print "supervisor step completed:",supervisor_step.value,steps
+            #print "supervisor step completed:",_smash_.supervisor_step.value,steps
 
             _smash_.supervisor_step.value += 1
 
@@ -153,6 +159,12 @@ class _smash_:
 
     @staticmethod
     def worker_wrap(wi,f,fname):
+        _smash_.N_STEPS = max(
+            int(config.get('smashbox_steps_limit', -1)), #this can be configured using [-o smashbox_steps_limit=N]
+            _smash_.N_STEPS)
+
+        #print "N_STEPS=" + str(_smash_.N_STEPS)
+
         if fname is None:
             fname = f.__name__
         _smash_.process_name=fname
