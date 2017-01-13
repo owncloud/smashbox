@@ -4,6 +4,7 @@ import os.path
 import datetime
 import subprocess
 import time
+import requests
 
 # Utilities to be used in the test-cases.
 from smashbox.utilities.version import version_compare
@@ -317,6 +318,28 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
     return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
 
+def oc_public_webdav_url(protocol='http',remote_folder="",token='',password=''):
+    """ Get public Webdav URL
+    """
+
+    if config.oc_ssl_enabled:
+        protocol += 's'
+
+    # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
+    remote_folder = remote_folder.lstrip('/')
+
+    remote_path = os.path.join(config.oc_root, 'public.php/webdav', remote_folder)
+
+    creds = ''
+    if token:
+        creds = token
+        if password:
+            creds += ':' + password
+
+    if creds:
+        creds += '@'
+
+    return protocol + '://' + creds + config.oc_server + '/' + remote_path
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
@@ -577,16 +600,17 @@ def fatal_check(expr,message=""):
 
 # ###### Server Log File Scraping ############
 
-def reset_server_log_file():
+def reset_server_log_file(force = False):
     """ Deletes the existing server log file so that there is a clean
         log file for the test run
     """
 
-    try:
-        if not config.oc_check_server_log:
+    if not force:
+        try:
+            if not config.oc_check_server_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
             return
-    except AttributeError: # allow this option not to be defined at all
-        return
 
     logger.info('Removing existing server log file')
     cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
@@ -594,29 +618,35 @@ def reset_server_log_file():
 
 
 
-def scrape_log_file(d):
+def scrape_log_file(d, force = False):
     """ Copies over the server log file and searches it for specific strings
 
     :param d: The directory where the server log file is to be copied to
 
     """
 
-    try:
-        if not config.oc_check_server_log:
-            return
-    except AttributeError: # allow this option not to be defined at all
-        return
-
-    if config.oc_server == '127.0.0.1' or config.oc_server == 'localhost':
-        cmd = 'cp %s/owncloud.log %s/.' % (config.oc_server_datadirectory, d)
-    else:
+    if not force:
         try:
-            log_user = config.oc_server_log_user
-        except AttributeError:  # allow this option not to be defined at all
-            log_user = 'root'
-        cmd = 'scp -P %d %s@%s:%s/owncloud.log %s/.' % (config.scp_port, log_user, config.oc_server, config.oc_server_datadirectory, d)
-    rtn_code,stdout,stderr = runcmd(cmd)
-    error_check(rtn_code > 0, 'Could not copy the log file from the server, command returned %s' % rtn_code)
+            if not config.oc_check_server_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
+            return
+
+    # download server log
+    log_url = 'http'
+    if config.oc_ssl_enabled:
+        log_url += 's'
+    log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
+    log_url += '/' + os.path.join(config.oc_root, 'index.php/settings/admin/log/download')
+
+    res = requests.get(log_url)
+
+    fatal_check(res.status_code == 200, 'Could not download the log file from the server, status code %i' % res.status_code)
+
+    file_handle = open(os.path.join(d, 'owncloud.log'), 'wb', 8192)
+    for chunk in res.iter_content(8192):
+        file_handle.write(chunk)
+    file_handle.close()
 
     # search logfile for string (1 == not found; 0 == found):
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
@@ -626,6 +656,10 @@ def scrape_log_file(d):
     cmd = "grep -i \"Exception\" %s/owncloud.log" % d
     rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Exception\" message found in server log file")
+
+    cmd = "grep -i \"Error\" %s/owncloud.log" % d
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    error_check(rtn_code > 0, "\"Error\" message found in server log file")
 
     cmd = "grep -i \"could not obtain lock\" %s/owncloud.log" % d
     rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
