@@ -4,6 +4,7 @@ import os.path
 import datetime
 import subprocess
 import time
+import urllib
 
 # Utilities to be used in the test-cases.
 from smashbox.utilities.version import version_compare
@@ -315,7 +316,7 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     else:
         password = config.oc_account_password
 
-    return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
+    return protocol + '://' + urllib.quote(username, safe='') + ':' + urllib.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
 
 
 def ocsync_version():
