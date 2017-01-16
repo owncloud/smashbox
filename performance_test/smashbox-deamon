@@ -1,0 +1,167 @@
+#!/usr/bin/python
+import sys,os,socket
+import argparse
+import subprocess,time,signal
+import io
+from multiprocessing import Process
+
+script_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+def timeout_func(pid, timeout_time):
+    print "PID OF RUNNING SMASHBOX:",pid
+    start = time.time()
+    while True:
+        if int(time.time() - start) > timeout_time:
+            stop_execution(pid)
+            break
+
+def kill_if_not_stopped(service):
+    import time
+    running = True
+    cmd = os.path.join(script_path, "performance_test/running.sh %s"%service)
+    status = "Process not running"
+    while (running):
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout = (process.communicate()[0]).encode('ascii', 'ignore')
+        if ((stdout.find(status) != -1)):
+            running = False
+        else:
+            print "some %s process is still running: %s" % (service, stdout)
+            import re
+            kill_array = re.findall(r'\d+', stdout)
+            for pid in kill_array:
+                stop_execution(int(pid))
+            time.sleep(1)
+
+def stop_execution(pid):
+    pid = int(pid)
+    print ("Timeout in smashbox occured, killing %s: ok" % pid)
+    try:
+        os.killpg(pid, signal.SIGTERM)
+        time.sleep(2)
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except:
+            pass
+        time.sleep(2)
+    except Exception, e:
+        print (e)
+        print "dirty kill.."
+        subprocess.call("kill -9 %s" % pid, shell=True)
+
+def get_lock():
+    process_name = 'running_test'
+    global lock_socket  # Without this our lock gets garbage collected
+    lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    try:
+        lock_socket.bind('\0' + process_name)
+        return 1
+    except socket.error:
+        return 0
+
+def validate_smashbox_basic_conf(argument_config):
+    if argument_config == '':
+        sd_path = os.path.join(script_path, 'performance_test/smashbox-deamon.json')
+
+        #validate smashbox-deamon.json configuration
+        if not (os.path.exists(sd_path)):
+            import json
+            json_tmp = {
+                        "tests" :
+                                [
+                                    {
+                                        "performance_test/test_gen_nplusone.py": {
+                                            "nplusone_filesize": {
+                                                "value": "100000",
+                                                "type": "int",
+                                                "_DESCRIPTION": "Specifies the size in Bytes of single test file"
+                                            },
+                                            "nplusone_nfiles": {
+                                                "value": "10",
+                                                "type": "int",
+                                                "_DESCRIPTION": "Specifies the number of test files"
+                                            },
+                                            "nplusone_fscheck": {
+                                                "value": "True",
+                                                "type": "bool",
+                                                "_DESCRIPTION": "Decide if to run checksum check on each file"
+                                            },
+                                        }
+                                    }
+                                ],
+                        "loop" : 1,
+                        "config" : [
+                            "performance_test/owncloud-example.json",
+                            "performance_test/dropbox-example.json"
+                        ],
+                        "timeout" : 3600,
+                        "_DESCRIPTION" : "Please refer to github repository. This field could also server as a comment field for this config file"
+                    }
+            with io.open(sd_path, 'w', encoding='utf-8') as f:
+                f.write(unicode(json.dumps(json_tmp, ensure_ascii=False, sort_keys = True, indent = 4)))
+            print "Please edit the config file with desired confirugartion and run the test! %s"%sd_path
+            sys.exit()
+    else:
+        sd_path = os.path.realpath(argument_config)
+        if not (os.path.exists(sd_path)):
+            print "Please edit the config file with desired confirugartion and run the test! %s" % sd_path
+            sys.exit()
+
+    #read the json from smashbox-deamon configuration
+    with io.open(sd_path,'r') as file:
+        data = eval(file.read())
+    return data
+
+
+def run(test_name, test_timeout):
+    process = subprocess.Popen(
+        ["bin/smash", test_name],
+        stdout = subprocess.PIPE,
+        stderr = subprocess.STDOUT,
+        preexec_fn = os.setsid,
+        cwd = script_path)
+    pid = str(os.getpgid(process.pid))
+    p = Process(target=timeout_func, args=(pid, test_timeout,))
+    p.start()
+    while True:
+        line = process.stdout.readline()
+        print line,
+        if line == '' and process.poll() != None:
+            p.terminate()
+            p.join()
+            break
+
+def main(arguments):
+    run_config = validate_smashbox_basic_conf(arguments.configs)
+    loops = run_config["loop"]
+    timeout = run_config["timeout"]
+    tests = run_config["tests"]
+    client_server_configs = run_config["config"]
+    for client_server_config in client_server_configs:
+        for i in range (0,loops):
+            for test in tests:
+                for test_name, test_details in test.items():
+                    test_details_array = []
+                    for detail_key, detail_value in test_details.items():
+                        test_details_array.append("-k %s=%s -kt %s=%s"%(detail_key, detail_value["value"], detail_key, detail_value["type"]))
+                    test_details = ' '.join(test_details_array)
+                    subprocess.call(
+                        os.path.join(script_path, "bin/config_gen --no-ask --key-value-file=%s %s"%(os.path.realpath(client_server_config),test_details)),
+                        shell=True)
+                    run(test_name, timeout)
+
+        
+if __name__ == '__main__':
+    """  This is the deamon to run multiple configs in the sequential manner  """
+    parser = argparse.ArgumentParser(description='This is the deamon to run multiple configs in the sequential manner')
+    parser.add_argument('--configs', default='', help='specifies target config for the test execution e.g. performance/smashbox-deamon.json')
+    args = parser.parse_args()
+    if (get_lock()==1):
+        main(args)
+    else:
+        print ("Aborting - wait for the end of the previous smashbox run")
+        sys.exit()
+
+
+
+

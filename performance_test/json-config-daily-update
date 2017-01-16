@@ -1,0 +1,45 @@
+#!/usr/bin/python
+
+import argparse
+import os
+from time import gmtime, strftime
+import json
+import sys
+class JsonConfigParser:
+    def __init__(self,args):
+        self.args = args
+        self.config = self.__get_config(args.path)
+
+    def __get_config(self,path):
+        import io
+        path = os.path.abspath(path)
+        if (os.path.exists(path)):
+            with io.open(path,'r') as file:
+                data = eval(file.read())
+            return data
+        else:
+            print "path does not exists %s"%path
+            return 0
+
+    def update_config_runids(self):
+        if "runid" in self.config and "value" in self.config["runid"]:
+            self.config["runid"]["value"] = strftime("%Y-%m-%d", gmtime())
+        else:
+            print 'Proper key structure ["runid": {"value": "XXX", "type": "None"}] does not exists in json: %s'%(self.args.path)
+
+
+    def save_config(self):
+        path = os.path.abspath(self.args.path)
+        if (os.path.exists(path)):
+            with open(path, 'w') as outfile:
+                json.dump(self.config, outfile, indent = 4, ensure_ascii=False)
+
+if __name__ == '__main__':
+    """    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", action="store",
+                        help="specify path of the smashbox-deamon config file with json structure e.g. /path-to-script/example.config")
+
+    jcp = JsonConfigParser(parser.parse_args())
+    jcp.update_config_runids()
+    jcp.save_config()

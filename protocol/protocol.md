@@ -139,6 +139,8 @@ Explanation of the capabilities:
 * `version`: detailed server version information
 * `meta`: ocs meta information
 
+Source code reference: client/src/libsync/capabilities.cpp (https://github.com/owncloud/client/blob/master/src/libsync/capabilities.cpp)
+
 ## WEBDAV
 
 Standard webdav request/response conventions apply.
@@ -167,7 +169,7 @@ PROPFIND Depth:infinity is not supported: client will try this for compatibility
 ### Quota Check Call
 
 Client displays user quota information. For that it does a PROPFIND call to the root of the 
-user space on the webdav server.
+user space on the webdav server. Quota is reported per account (or per quota node) defined on the storage server. The result of this query will be the same for all directories (URI part of the request) which belong to the same account (or quota node).
 
 Syntax:
 
@@ -200,8 +202,6 @@ Reponse body example:
       </d:response>
     </d:multistatus>
     
-Besides the actual quota sizes in bytes the server also returns the fileId and the permissions
-of the top directory.
 
 ### Connection Validation Call
 
@@ -245,7 +245,7 @@ This call only happens to the server top directory.
 
 ### Modification Check on Top-level Directory
 
-FIXME
+FIXME: this section and its example is plain wrong and needs reviewing
 
 To detect changes of data on the server repository client issues stat-like calls to the 
 top level directory of a sync connection to request the last modification timestamp on a regular basis. 
@@ -560,6 +560,9 @@ Specific error code handling:
 
 
 ### Chunked File Upload 
+
+Note: new generation fo chunked upload is under development and it is described here: 
+https://github.com/cernbox/smashbox/blob/master/protocol/chunking.md
 
 If the file size exceeds a certain size, the file uploads happens
 through so called "big file chunking". The file is split into chunks
