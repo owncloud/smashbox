@@ -451,6 +451,12 @@ def mv(a,b):
     runcmd('mv %s %s'%(a,b))
 
 
+import fnmatch
+def remove_db_in_folder(path):
+    for file in os.listdir(path):
+        if fnmatch.fnmatch(file, '*.db'):
+            remove_file(os.path.join(path, file))
+
 def list_files(path,recursive=False):
     if platform.system() == 'Darwin':
         opts = ""

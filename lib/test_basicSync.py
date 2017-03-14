@@ -202,7 +202,7 @@ def loser(step):
 
     # remove the sync db
     if rmLocalStateDB:
-        remove_file(os.path.join(d,'.csync_journal.db'))
+        remove_db_in_folder(d)
 
     run_ocsync(d,n=3) # conflict file will be synced to the server but it requires more than one sync run
 
