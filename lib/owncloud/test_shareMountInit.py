@@ -19,9 +19,9 @@ scenarios where user is receiving shared/reshared files and folders via group/us
 |       | share test2.txt |                |                   |              |                 |
 |       | -> R4 (user)    |                |                   |              |                 |
 +-------+-----------------+----------------+-------------------+--------------+-----------------+
-| 3     |                 |                | reshare /test1/sub| reshare      |                 |
-|       |                 |                | -> R4             | test1.txt    |                 |
-|       |                 |                |                   | -> R4        |                 |
+| 3     |                 |                | reshare directory | reshare file |                 |
+|       |                 |                | -> R4             | -> R4        |                 |
+|       |                 |                | /test1/sub        | test1.txt    |                 |
 +-------+-----------------+----------------+-------------------+--------------+-----------------+
 | 4     | sync&check      | sync&check     | sync&check        | sync&check   | do noting yet   |
 +-------+-----------------+----------------+-------------------+--------------+-----------------+

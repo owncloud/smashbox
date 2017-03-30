@@ -21,32 +21,22 @@ if type(filesize) is type(''):
 use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
 
 testsets = [
-        { 'nplusone_filesize': 1000, 
-          'nplusone_nfiles':100
+        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(0.1),
+          'nplusone_nfiles':100,
+          'use_new_dav_endpoint':True
         },
-
-        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(0.3), 
-          'nplusone_nfiles':10
-        },
-
-        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(1.3), 
-          'nplusone_nfiles':2
-        },
-
-        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(3.5), 
+        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(6),
           'nplusone_nfiles':1,
           'use_new_dav_endpoint':True
         },
-
-        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(3.5),
-          'nplusone_nfiles':1,
-          'use_new_dav_endpoint':False
-        },
-
         { 'nplusone_filesize': (3.5,1.37), # standard file distribution: 10^(3.5) Bytes
           'nplusone_nfiles':10,
+          'use_new_dav_endpoint':True
         },
-
+        { 'nplusone_filesize': (3.5,1.37), # standard file distribution: 10^(3.5) Bytes
+          'nplusone_nfiles':10,
+          'use_new_dav_endpoint':False
+        },
 ]
 
 def finish_if_not_capable():
