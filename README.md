@@ -21,7 +21,81 @@ The goal of this is to:
 If you think you see a bug - write a test-case and let others
 reproduce it on their systems.
 
-This is work in progress. 
+Quickstart
+==========
+
+- Find your localhost owncloud server ip using e.g. `ipconfig`
+- Execute smashbox run over that server e.g. `172.16.12.112:80/octest`. Ensure to mount `smashdir` directory to local filesystem to be able to debug test run
+```
+docker run \
+-e SMASHBOX_URL=172.16.12.112:80/octest \
+-e SMASHBOX_USERNAME=admin \
+-e SMASHBOX_PASSWORD=admin \
+-e SMASHBOX_ACCOUNT_PASSWORD=admin \
+-v ~/smashdir:/smashdir \
+owncloud/smashbox lib/test_nplusone.py
+```
+- Check run logs
+```
+$ cat ~/smashdir/log-test_nplusone.log | grep error (..warning, critical etc)
+```
+- Check client logs
+```
+$ cat ~/smashdir/test_nplusone/worker0-ocsync.step01.cnt000.log  | grep error (..warning, critical etc)
+```
+- Check sync client directories of workers
+```
+$ ls ~/smashdir/test_nplusone/worker1/
+```
+- You can also run whole integration tests suite in docker for you server
+```
+./bin/run_all_integration.sh 172.16.12.112:80/octest
+```
+
+Important integration tests
+===========================
+
+ * [Basic Sync and Conflicts ](lib/test_basicSync.py)
+    - basicSync_filesizeKB from 1kB to 50MB (normal and chunked files sync)
+    - basicSync_rmLocalStateDB removing local database in the test (index 0-3) or not (index 4-7)
+ * [Concurrently removing directory while files are being added ](lib/test_concurrentDirRemove.py)
+    - Currently only checks for corrupted files in the outcome
+    - Removing the directory while a large file is chunk-uploaded (index 0)
+    - Removing the directory while lots of smaller files are uploaded (index 1)
+    - Removing the directory before files are uploaded (index 2)
+ * [Resharing ](lib/oc-test/test_reshareDir.py)
+    - Share directory with receiver and receiver reshares one of the files with another user
+ * [Directory Sharing between users ](lib/oc-test/test_shareDir.py)
+    - Tests various sharing actions between users
+ * [Files Sharing between users ](lib/oc-test/test_shareFile.py)
+    - Tests various sharing actions between users
+ * [Files Sharing between users and groups ](lib/oc-test/test_shareGroup.py)
+    - Tests various sharing actions between users and groups
+ * [Files Sharing by link ](lib/oc-test/test_shareLink.py)
+    - Tests various sharing actions with links
+ * [Ensures correct behaviour having different permissions ](lib/oc-test/test_sharePermissions.py)
+    - Tests various sharing actions having share permissions
+ * [Ensures correct etag propagation 1](lib/owncloud/test_sharePropagationGroups.py)
+    - Tests etag propagation sharing/resharing between groups of users
+ * [Ensures correct etag propagation 2](lib/owncloud/test_sharePropagationInsideGroups.py)
+    - Tests etag propagation sharing/resharing between groups of users
+ * [Syncing shared mounts](lib/owncloud/test_shareMountInit.py)
+   - Test is oriented on syncing share mount in most sharing cases
+
+Important performance tests
+===========================
+
+ * [Upload/Download of small/big files](lib/test_nplusone.py)
+    - Test should monitor upload/download sync time in each of the scenarious (TODO)
+    - Test (index 0) verifies performance of many small files - 100 files - each 1kB
+    - Test (index 1) verifies performance of 1 big over-chunking-size file of total size 60MB
+ * [Shared Mount Performance](lib/owncloud/test_shareMountInit.py)
+    - PROPFIND on root folder - initialize mount points (initMount is done only on 1st propfind on received shares)
+    - PROPFIND on root folder with initialized content and mount points
+    - PUT to non-shared folder
+    - PUT to shared folder
+    - GET to non-shared folder
+    - GET to shared folder
 
 Project tree
 ============
@@ -97,7 +171,10 @@ Examples:
 
     # basic test
     bin/smash lib/test_basicSync.py
-    
+
+    # basic test, specifying test number as specified in tests' `testsets` array
+    bin/smash -t 0 lib/test_basicSync.py
+
     # run a test with different paremeters
     bin/smash -o nplusone_nfiles=10 lib/test_nplusone.py
     
@@ -170,6 +247,7 @@ or below in case of failure to push to monitoring
 One can add their own monitoring endpoint by [adding new option](python/smashbox/utilities/monitoring.py) in `push_to_monitoring`. You can test your custom test (as in [test_nplusone](lib/test_nplusone.py)) and monitoring endpoint setting flag
 `-o monitoring_type=MY_CUSTOM_MONITORING_TYPE` e.g. `-o monitoring_type=local`
 
+=======
 
 Different client/server
 =======================
