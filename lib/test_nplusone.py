@@ -8,7 +8,7 @@ __doc__ = """ Add nfiles to a directory and check consistency.
 
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
-from smashbox.utilities.monitoring import push_to_monitoring
+from smashbox.utilities.monitoring import commit_to_monitoring
 
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
@@ -78,7 +78,7 @@ def worker0(step):
     if fscheck:
         # drop the caches (must be running as root on Linux)
         runcmd('echo 3 > /proc/sys/vm/drop_caches')
-        
+
         ncorrupt = analyse_hashfiles(d)[2]
         fatal_check(ncorrupt==0, 'Corrupted files ON THE FILESYSTEM (%s) found'%ncorrupt)
 
@@ -97,12 +97,12 @@ def worker0(step):
     step(4,"Final report")
 
     time1 = time.time()
-    push_to_monitoring("cernbox.cboxsls.nplusone.nfiles",nfiles)
-    push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone.elapsed",time1-time0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone.transfer_rate",total_size/(time1-time0))
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker0.synced_files",k1-k0)
+    commit_to_monitoring("cernbox.cboxsls.nplusone.nfiles",nfiles)
+    commit_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
+    commit_to_monitoring("cernbox.cboxsls.nplusone.elapsed",time1-time0)
+    commit_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
+    commit_to_monitoring("cernbox.cboxsls.nplusone.transfer_rate",total_size/(time1-time0))
+    commit_to_monitoring("cernbox.cboxsls.nplusone.worker0.synced_files",k1-k0)
 
         
 @add_worker
@@ -119,9 +119,9 @@ def worker1(step):
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
 
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker1.synced_files",k1-k0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker1.cor",ncorrupt)
-                       
+    commit_to_monitoring("cernbox.cboxsls.nplusone.worker1.synced_files",k1-k0)
+    commit_to_monitoring("cernbox.cboxsls.nplusone.worker1.cor",ncorrupt)
+
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%d) found'%ncorrupt) #Massimo 12-APR

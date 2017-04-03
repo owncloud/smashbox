@@ -185,7 +185,7 @@ class _smash_:
         from multiprocessing import Process, Manager
 
         import smashbox.utilities
-        smashbox.utilities.setup_test()        
+        smashbox.utilities.setup_test()
 
         manager = Manager()
 
@@ -214,12 +214,17 @@ class _smash_:
         for p in _smash_.all_procs:
             p.join()
 
-        smashbox.utilities.finalize_test()
-
+        returncode = 0
         for p in _smash_.all_procs:
            if p.exitcode != 0:
-              import sys
-              sys.exit(p.exitcode)
+              returncode = p.exitcode
+              break
+
+        smashbox.utilities.finalize_test(returncode)
+
+        if returncode != 0:
+            import sys
+            sys.exit(returncode)
 
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test

@@ -1,16 +1,44 @@
 from smashbox.utilities import *
+from smashbox.utilities import reflection
 
-# simple monitoring to grafana (disabled if not set in config)
+def commit_to_monitoring(metric,value,timestamp=None):
+    shared = reflection.getSharedObject()
+    if not 'monitoring_points' in shared.keys():
+        shared['monitoring_points'] = []
 
-def push_to_monitoring(metric,value,timestamp=None):
+    # Create monitoring metric point
+    monitoring_point = dict()
+    monitoring_point['metric'] = metric
+    monitoring_point['value'] = value
+    monitoring_point['timestamp'] = timestamp
 
-    monitoring_host=config.get('monitoring_host',None)
-    monitoring_port=config.get('monitoring_port',2003)
+    # Append metric to shared object
+    monitoring_points = shared['monitoring_points']
+    monitoring_points.append(monitoring_point)
+    shared['monitoring_points'] = monitoring_points
 
-    if not monitoring_host:
+def push_to_monitoring(returncode):
+    shared = reflection.getSharedObject()
+    if not 'monitoring_points' in shared.keys():
         return
 
-    if not timestamp:
-        timestamp = time.time()
+    monitoring_type = config.get('monitoring_type', None)
+    if monitoring_type == 'cernbox':
+        monitoring_host = config.get('monitoring_host', None)
+        monitoring_port = config.get('monitoring_port', 2003)
 
-    os.system("echo '%s %s %s' | nc %s %s"%(metric,value,timestamp,monitoring_host,monitoring_port))
+        if not monitoring_host:
+            return
+
+        monitoring_points = shared['monitoring_points']
+        for monitoring_point in monitoring_points:
+            timestamp = monitoring_point['timestamp']
+            if not timestamp:
+                timestamp = time.time()
+
+            os.system("echo '%s %s %s' | nc %s %s" % (monitoring_point['metric'],  monitoring_point['value'], timestamp, monitoring_host, monitoring_port))
+    else:
+        monitoring_points = shared['monitoring_points']
+        for monitoring_point in monitoring_points:
+            print monitoring_point['metric'], monitoring_point['value']
+        print "returncode", returncode
