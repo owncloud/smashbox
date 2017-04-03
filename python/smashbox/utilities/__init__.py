@@ -8,6 +8,7 @@ import requests
 
 # Utilities to be used in the test-cases.
 from smashbox.utilities.version import version_compare
+from smashbox.utilities.monitoring import push_to_monitoring
 
 
 def compare_oc_version(compare_to, operator):
@@ -50,7 +51,7 @@ def compare_client_version(compare_to, operator):
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
-    return int(20*1024*1024*factor) # 20MB as of client 1.7 
+    return int(10*1024*1024*factor) # 10MB as of client 2.3
 
 
 ######## TEST SETUP AND PREPARATION
@@ -69,9 +70,8 @@ def setup_test():
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
     reset_server_log_file()
-    
 
-def finalize_test():
+def finalize_test(returncode):
     """ Finalize hooks run after last worker terminated.
     This is run under the name of the "supervisor" worker.
 
@@ -83,6 +83,7 @@ def finalize_test():
     """
     d = make_workdir()
     scrape_log_file(d)
+    push_to_monitoring(returncode)
 
 ######### HELPERS
 
