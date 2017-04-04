@@ -201,6 +201,8 @@ class _smash_:
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
 
+        import time
+        t1 = time.time()
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
@@ -214,13 +216,14 @@ class _smash_:
         for p in _smash_.all_procs:
             p.join()
 
+        total_duration = time.time() - t1
         returncode = 0
         for p in _smash_.all_procs:
            if p.exitcode != 0:
               returncode = p.exitcode
               break
 
-        smashbox.utilities.finalize_test(returncode)
+        smashbox.utilities.finalize_test(returncode, total_duration)
 
         if returncode != 0:
             import sys
