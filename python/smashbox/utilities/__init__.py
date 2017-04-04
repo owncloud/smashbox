@@ -71,7 +71,7 @@ def setup_test():
     reset_rundir()
     reset_server_log_file()
 
-def finalize_test(returncode):
+def finalize_test(returncode, total_duration):
     """ Finalize hooks run after last worker terminated.
     This is run under the name of the "supervisor" worker.
 
@@ -83,9 +83,12 @@ def finalize_test(returncode):
     """
     d = make_workdir()
     scrape_log_file(d)
-    push_to_monitoring(returncode)
+    push_to_monitoring(returncode, total_duration)
 
 ######### HELPERS
+
+def log_info(message):
+    logger.info(message)
 
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     """ 

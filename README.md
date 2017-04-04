@@ -106,6 +106,53 @@ Examples:
 
 You will find main log files in ~/smashdir/log* and all temporary files and detailed logs for each test-case in ~/smashdir/<test-case>
 
+Monitoring integration
+=======================
+
+Currently, monitoring module is supporting `local` and `prometheus` endpoints. Prometheus endpoint can be used in integration with Jenkins.
+
+By default, two values are prepared for export, 'total_duration' and 'number_of_queries', however one can embed inside the test their custom variables using e.g. `commit_to_monitoring("download_duration",time1-time0)` inside `lib/test_nplusone.py` test.
+
+**Export to local monitor example:**
+
+Executing
+
+```
+bin/smash -t 1 -o monitoring_type=local lib/test_nplusone.py
+```
+
+will execute index `1` of `test_nplusone` test and adding option flag `-o monitoring_type=local` will result in the below output if test has been completed successfully
+
+```
+download_duration 0.750847816467
+upload_duration 1.4001121521
+returncode 0
+elapsed 6.87230300903
+```
+
+or below in case of failure
+
+```
+returncode 2
+elapsed 7.0446870327
+```
+
+**Export to prometheus with jenkins example:**
+
+Executing
+
+```
+bin/smash -t 1 -o monitoring_type=prometheus -o endpoint=http://localhost:9091/metrics/job/jenkins/instance/smashbox -o duration_label=jenkins_smashbox_test_duration -o queries_label=jenkins_smashbox_db_queries -o owncloud=daily-master -o client=2.3.1 -o suite=nplusonet1 -o build=test_build1 lib/test_nplusone.py
+```
+
+will result in:
+ * pushing the monitoring points to the Prometheus endpoint `http://localhost:9091/metrics/job/jenkins/instance/smashbox`
+ * Adding flags `-o duration_label=jenkins_smashbox_test_duration` and `-o queries_label=jenkins_smashbox_db_queries` will cause default results 'total_duration' and 'number_of_queries' to be exported to Prometheus.
+ * Additional flags `-o queries_label=jenkins_smashbox_db_queries`, `-o owncloud=daily-master`, `-o client=2.3.1`, `-o suite=nplusonet1`, `-o build=test_build1` can be used in order to distinguish smashbox runs
+
+or below in case of failure to push to monitoring
+
+`curl: (7) Failed to connect to localhost port 9091: Connection refused`
 
 Different client/server
 =======================

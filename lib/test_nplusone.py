@@ -13,9 +13,6 @@ from smashbox.utilities.monitoring import commit_to_monitoring
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
 
-# optional fs check before files are uploaded by worker0
-fscheck = config.get('nplusone_fscheck',False)
-
 if type(filesize) is type(''):
     filesize = eval(filesize)
 
@@ -67,43 +64,27 @@ def worker0(step):
         sizes.append(size)
         total_size+=size
 
-    time0=time.time()
-
     logger.log(35,"Timestamp %f Files %d TotalSize %d",time.time(),nfiles,total_size)
 
     # create the test files
     for size in sizes:
         create_hashfile(d,size=size)
 
-    if fscheck:
-        # drop the caches (must be running as root on Linux)
-        runcmd('echo 3 > /proc/sys/vm/drop_caches')
-
-        ncorrupt = analyse_hashfiles(d)[2]
-        fatal_check(ncorrupt==0, 'Corrupted files ON THE FILESYSTEM (%s) found'%ncorrupt)
-
+    time0=time.time()
     run_ocsync(d)
+    time1=time.time()
 
     ncorrupt = analyse_hashfiles(d)[2]
     
     k1 = count_files(d)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
-
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
     logger.info('SUCCESS: %d files found',k1)
 
-    step(4,"Final report")
-
-    time1 = time.time()
-    commit_to_monitoring("cernbox.cboxsls.nplusone.nfiles",nfiles)
-    commit_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    commit_to_monitoring("cernbox.cboxsls.nplusone.elapsed",time1-time0)
-    commit_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    commit_to_monitoring("cernbox.cboxsls.nplusone.transfer_rate",total_size/(time1-time0))
-    commit_to_monitoring("cernbox.cboxsls.nplusone.worker0.synced_files",k1-k0)
-
+    step(4, "Final report")
+    commit_to_monitoring("upload_duration",time1-time0)
         
 @add_worker
 def worker1(step):
@@ -114,19 +95,19 @@ def worker1(step):
 
     step(3,'Resync and check files added by worker0')
 
+    time0=time.time()
     run_ocsync(d)
+    time1=time.time()
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
-
-    commit_to_monitoring("cernbox.cboxsls.nplusone.worker1.synced_files",k1-k0)
-    commit_to_monitoring("cernbox.cboxsls.nplusone.worker1.cor",ncorrupt)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%d) found'%ncorrupt) #Massimo 12-APR
 
-
+    step(4,"Final report")
+    commit_to_monitoring("download_duration",time1-time0)
 
 
 
