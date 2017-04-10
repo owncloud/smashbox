@@ -154,6 +154,12 @@ or below in case of failure to push to monitoring
 
 `curl: (7) Failed to connect to localhost port 9091: Connection refused`
 
+**Adding custom monitoring endpoint:**
+
+One can add their own monitoring endpoint by [adding new option](python/smashbox/utilities/monitoring.py) in `push_to_monitoring`. You can test your custom test (as in [test_nplusone](lib/test_nplusone.py)) and monitoring endpoint setting flag
+`-o monitoring_type=MY_CUSTOM_MONITORING_TYPE` e.g. `-o monitoring_type=local`
+
+
 Different client/server
 =======================
 
