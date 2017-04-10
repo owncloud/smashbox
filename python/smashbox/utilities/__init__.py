@@ -626,21 +626,10 @@ def reset_server_log_file(force = False):
     cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
     runcmd(cmd)
 
-
-
-def scrape_log_file(d, force = False):
-    """ Copies over the server log file and searches it for specific strings
-
-    :param d: The directory where the server log file is to be copied to
+def get_log_file():
+    """ Copies over the server log file
 
     """
-
-    if not force:
-        try:
-            if not config.oc_check_server_log:
-                return
-        except AttributeError: # allow this option not to be defined at all
-            return
 
     # download server log
     log_url = 'http'
@@ -652,6 +641,23 @@ def scrape_log_file(d, force = False):
     res = requests.get(log_url)
 
     fatal_check(res.status_code == 200, 'Could not download the log file from the server, status code %i' % res.status_code)
+
+    return res
+
+def scrape_log_file(d, force = False):
+    """ Copies over the server log file and searches it for specific strings
+
+    :param d: The directory where the server log file is to be copied to
+
+    """
+    if not force:
+        try:
+            if not config.oc_check_server_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
+            return
+
+    res = get_log_file()
 
     file_handle = open(os.path.join(d, 'owncloud.log'), 'wb', 8192)
     for chunk in res.iter_content(8192):

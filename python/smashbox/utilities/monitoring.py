@@ -40,7 +40,8 @@ def push_to_monitoring(returncode, total_duration):
 
         # total duration is default for jenkins if given
         if duration_label is not None:
-            points_to_push.append('%s{owncloud=\\"%s\\",client=\\"%s\\",suite=\\"%s\\",build=\\"%s\\",exit=\\"%s\\"} %s'%(
+            points_to_push.append('# TYPE %s gauge' % (duration_label))
+            points_to_push.append('%s{owncloud=\\"%s\\",client=\\"%s\\",suite=\\"%s\\",build=\\"%s\\",exit=\\"%s\\"} %s' %(
                 duration_label,
                 release,
                 client,
@@ -51,9 +52,13 @@ def push_to_monitoring(returncode, total_duration):
 
         # No. queries is default for jenkins if given
         if queries_label is not None:
-            # TODO: add number of queries from log
+            #res = smashbox.utilities.get_log_file()
+
+            #for chunk in res.iter_content(8192):
+            #    print chunk
             no_queries = 0
-            points_to_push.append('%s{owncloud=\\"%s\\",client=\\"%s\\",suite=\\"%s\\",build=\\"%s\\",exit=\\"%s\\"} %s'%(
+            points_to_push.append('# TYPE %s gauge' % (queries_label))
+            points_to_push.append('%s{owncloud=\\"%s\\",client=\\"%s\\",suite=\\"%s\\",build=\\"%s\\",exit=\\"%s\\"} %s' %(
                 queries_label,
                 release,
                 client,
@@ -62,15 +67,26 @@ def push_to_monitoring(returncode, total_duration):
                 returncode,
                 no_queries))
 
-        # Other points are not supported in jenkins yet
+        # Export all commited monitoring points
         for monitoring_point in monitoring_points:
-            continue
+            points_to_push.append('# TYPE %s gauge' % (monitoring_point['metric']))
+            points_to_push.append('%s{owncloud=\\"%s\\",client=\\"%s\\",suite=\\"%s\\",build=\\"%s\\",exit=\\"%s\\"} %s' % (
+                monitoring_point['metric'],
+                release,
+                client,
+                suite,
+                build,
+                returncode,
+                monitoring_point['value']))
 
         # Push to monitoring all points to be pushed
+        cmd = ''
         for point_to_push in points_to_push:
-            cmd = "echo \"%s\" | curl --data-binary @- %s"%(point_to_push,monitoring_endpoint)
-            smashbox.utilities.log_info('Pushing to monitoring: %s'%cmd)
-            os.system(cmd)
+            cmd += point_to_push+'\n'
+
+        monitoring_cmd = 'echo "%s" | curl --data-binary @- %s\n' % (cmd,monitoring_endpoint)
+        os.system(monitoring_cmd)
+        smashbox.utilities.log_info('Pushing to monitoring: %s' % monitoring_cmd)
 
     elif monitoring_type == 'local':
         for monitoring_point in monitoring_points:
