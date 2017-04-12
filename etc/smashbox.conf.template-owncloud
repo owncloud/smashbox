@@ -135,6 +135,11 @@ oc_server_log_user = "www-data"
 #
 oc_check_server_log = False
 
+#
+# Reset the diagnostic log file and use diagnostics for assertions
+#
+oc_check_diagnostic_log = False
+
 from collections import OrderedDict
 _configgen = OrderedDict([('KeyRemoverProcessor',
                                     {'keylist': ('_configgen', 'oc_server', 'oc_ssl_enabled',
