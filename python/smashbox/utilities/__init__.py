@@ -70,6 +70,7 @@ def setup_test():
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
     reset_server_log_file()
+    reset_diagnostics()
 
 def finalize_test(returncode, total_duration):
     """ Finalize hooks run after last worker terminated.
@@ -626,23 +627,61 @@ def reset_server_log_file(force = False):
     cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
     runcmd(cmd)
 
-def get_log_file():
-    """ Copies over the server log file
-
+def reset_diagnostics(force = False):
+    """ Deletes the existing server log file so that there is a clean
+        log file for the test run, and set neccesairly flags on the server for diagnostic log generation
     """
 
-    # download server log
+    if not force:
+        try:
+            if not config.oc_check_diagnostic_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
+            return
+
+    logger.info('Initializing diagnostic log file')
     log_url = 'http'
     if config.oc_ssl_enabled:
         log_url += 's'
     log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
-    log_url += '/' + os.path.join(config.oc_root, 'index.php/settings/admin/log/download')
 
-    res = requests.get(log_url)
+    clean_log_url = log_url + '/' + os.path.join(config.oc_root, 'index.php/apps/diagnostics/log/clean')
+    res = requests.post(clean_log_url)
 
-    fatal_check(res.status_code == 200, 'Could not download the log file from the server, status code %i' % res.status_code)
+    fatal_check(res.status_code == 200, 'Could not clean the diagnostic log file from the server, status code %i' % res.status_code)
+    fatal_check(res.text == "null", 'Diagnostic app seems disabled, returned body %s' % res.text)
 
-    return res
+def parse_log_file_lines(res):
+    data = []
+    if res is not None:
+        import json
+        for line in res.iter_lines():
+            data.append(json.loads(line))
+    return data
+
+def get_diagnostic_log(force = False):
+    """
+    Obtains server diagnostic log in JSON format and parses it
+    """
+
+    if not force:
+        try:
+            if not config.oc_check_diagnostic_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
+            return
+
+    logger.info('Obtaining diagnostic log file')
+    log_url = 'http'
+    if config.oc_ssl_enabled:
+        log_url += 's'
+    log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
+
+    dwn_log_url = log_url + '/' + os.path.join(config.oc_root, 'index.php/apps/diagnostics/log/download')
+    res = requests.get(dwn_log_url)
+
+    fatal_check(res.status_code == 200, 'Could not download the diagnostic log file from the server, status code %i' % res.status_code)
+    return parse_log_file_lines(res)
 
 def scrape_log_file(d, force = False):
     """ Copies over the server log file and searches it for specific strings
@@ -657,7 +696,16 @@ def scrape_log_file(d, force = False):
         except AttributeError: # allow this option not to be defined at all
             return
 
-    res = get_log_file()
+    # download server log
+    log_url = 'http'
+    if config.oc_ssl_enabled:
+        log_url += 's'
+    log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
+    log_url += '/' + os.path.join(config.oc_root, 'index.php/settings/admin/log/download')
+
+    res = requests.get(log_url)
+
+    fatal_check(res.status_code == 200, 'Could not download the log file from the server, status code %i' % res.status_code)
 
     file_handle = open(os.path.join(d, 'owncloud.log'), 'wb', 8192)
     for chunk in res.iter_content(8192):

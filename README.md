@@ -113,6 +113,17 @@ Currently, monitoring module is supporting `local` and `prometheus` endpoints. P
 
 By default, two values are prepared for export, 'total_duration' and 'number_of_queries', however one can embed inside the test their custom variables using e.g. `commit_to_monitoring("download_duration",time1-time0)` inside `lib/test_nplusone.py` test.
 
+**NOTE: To enable checking number of queries, one need to set `oc_check_diagnostic_log = True` in the `smashbox.conf` file**
+
+**NOTE: To enable diagnostics in SUMMARY level on the server one need to go to the server directory e.g. `/var/www/owncloud` and:**
+
+```
+git clone https://github.com/owncloud/diagnostics apps/diagnostics
+sudo -u www-data php occ app:enable diagnostics
+sudo -u www-data php occ config:system:set --value true debug
+sudo -u www-data php occ config:app:set --value 1 diagnostics diagnosticLogLevel
+```
+
 **Export to local monitor example:**
 
 Executing
@@ -148,7 +159,7 @@ bin/smash -t 1 -o monitoring_type=prometheus -o endpoint=http://localhost:9091/m
 will result in:
  * pushing the monitoring points to the Prometheus endpoint `http://localhost:9091/metrics/job/jenkins/instance/smashbox`
  * Adding flags `-o duration_label=jenkins_smashbox_test_duration` and `-o queries_label=jenkins_smashbox_db_queries` will cause default results 'total_duration' and 'number_of_queries' to be exported to Prometheus.
- * Additional flags `-o queries_label=jenkins_smashbox_db_queries`, `-o owncloud=daily-master`, `-o client=2.3.1`, `-o suite=nplusonet1`, `-o build=test_build1` can be used in order to distinguish smashbox runs
+ * Additional flags `-o owncloud=daily-master`, `-o client=2.3.1`, `-o suite=nplusonet1`, `-o build=test_build1` can be used in order to distinguish smashbox runs
 
 or below in case of failure to push to monitoring
 
