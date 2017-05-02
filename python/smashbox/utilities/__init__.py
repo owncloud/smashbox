@@ -667,9 +667,9 @@ def get_diagnostic_log(force = False):
     if not force:
         try:
             if not config.oc_check_diagnostic_log:
-                return
+                return []
         except AttributeError: # allow this option not to be defined at all
-            return
+            return []
 
     logger.info('Obtaining diagnostic log file')
     log_url = 'http'
