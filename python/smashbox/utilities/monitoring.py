@@ -54,7 +54,8 @@ def handle_prometheus_push(returncode, total_duration, monitoring_points):
         no_queries = 0
         res_diagnostic_logs = smashbox.utilities.get_diagnostic_log()
         for diagnostic_log in res_diagnostic_logs:
-            no_queries += int(diagnostic_log['diagnostics']['totalSQLQueries'])
+            if 'diagnostics' in diagnostic_log and 'totalSQLQueries' in diagnostic_log['diagnostics']:
+                no_queries += int(diagnostic_log['diagnostics']['totalSQLQueries'])
 
         points_to_push.append('# TYPE %s gauge' % (queries_label))
         points_to_push.append('%s{owncloud=\\"%s\\",client=\\"%s\\",suite=\\"%s\\",build=\\"%s\\",exit=\\"%s\\"} %s' % (
