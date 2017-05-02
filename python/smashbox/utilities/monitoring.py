@@ -88,11 +88,11 @@ def handle_prometheus_push(returncode, total_duration, monitoring_points):
     smashbox.utilities.log_info('Pushing to monitoring: %s' % monitoring_cmd)
 
 def push_to_monitoring(returncode, total_duration):
+    monitoring_points = []
     shared = reflection.getSharedObject()
-    if not 'monitoring_points' in shared.keys():
-        return
+    if 'monitoring_points' in shared.keys():
+        monitoring_points = shared['monitoring_points']
 
-    monitoring_points = shared['monitoring_points']
     monitoring_type = config.get('monitoring_type', None)
     if monitoring_type == 'prometheus':
         handle_prometheus_push(returncode, total_duration, monitoring_points)
