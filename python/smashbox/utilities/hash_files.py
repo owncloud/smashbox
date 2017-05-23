@@ -33,7 +33,12 @@ def get_files(wdir, filemask=None):
     # if filemask defined then filter names out accordingly
     if filemask:
         fl = fnmatch.filter(fl, filemask.replace('{md5}', '*'))
-    fl = set(fl) - set(config.ignored_files)
+
+    to_ignore = config.ignored_files
+    for file in fl:
+        if fnmatch.fnmatch(file, '*.db*'):
+            to_ignore.append(file)
+    fl = set(fl) - set(to_ignore)
     return fl
 
 
