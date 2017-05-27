@@ -147,14 +147,27 @@ def public_downloader_selected_single_files(step):
     step(5, 'Downloads and validate')
 
     shared = reflection.getSharedObject()
-    url = oc_webdav_url(
-        remote_folder=os.path.join(
-            'index.php', 's',
-            shared['SHARE_LINK_TOKEN_TEST_DIR'],
-            'download?path=%2F&files=%5B%22TEST_FILE_LINK_SHARE1.txt%22%5D'
-        ),
-        webdav_endpoint=config.oc_root
-    )
+
+    if compare_oc_version('9.1', '<='):
+        url = oc_webdav_url(
+            remote_folder=os.path.join(
+                'index.php', 's',
+                shared['SHARE_LINK_TOKEN_TEST_DIR'],
+                'download?path=%2F&files=%5B%22TEST_FILE_LINK_SHARE1.txt%22%5D'
+            ),
+            webdav_endpoint=config.oc_root
+        )
+    else:
+        # Api changed in 10.0
+        # http://localhost/owncloudtest/index.php/s/Q3ZMB4S8xveM2x5/download?path=%2F&files[]=TEST_FILE_LINK_SHARE1.txt&files[]=TEST_FILE_LINK_SHARE2.txt
+        url = oc_webdav_url(
+            remote_folder=os.path.join(
+                'index.php', 's',
+                shared['SHARE_LINK_TOKEN_TEST_DIR'],
+                'download?path=%2F&files%5B%5D=TEST_FILE_LINK_SHARE1.txt'
+            ),
+            webdav_endpoint=config.oc_root
+        )
 
     download_target = os.path.join(d, 'TEST_FILE_LINK_SHARE1.txt')
     runcmd('curl -k %s -o \'%s\' \'%s\'' % (config.get('curl_opts', ''), download_target, url))
@@ -268,14 +281,28 @@ def public_downloader_selected_files(step):
     step(5, 'Downloads and validate')
 
     shared = reflection.getSharedObject()
-    url = oc_webdav_url(
-        remote_folder=os.path.join(
-            'index.php', 's',
-            shared['SHARE_LINK_TOKEN_TEST_DIR'],
-            'download?path=%2F&files=%5B%22TEST_FILE_LINK_SHARE1.txt%22%2C%22TEST_FILE_LINK_SHARE2.txt%22%5D'
-        ),
-        webdav_endpoint=config.oc_root
-    )
+
+
+    if compare_oc_version('9.1', '<='):
+        url = oc_webdav_url(
+            remote_folder=os.path.join(
+                'index.php', 's',
+                shared['SHARE_LINK_TOKEN_TEST_DIR'],
+                'download?path=%2F&files=%5B%22TEST_FILE_LINK_SHARE1.txt%22%2C%22TEST_FILE_LINK_SHARE2.txt%22%5D'
+            ),
+            webdav_endpoint=config.oc_root
+        )
+    else:
+        # Api changed in 10.0
+        # http://localhost/owncloudtest/index.php/s/Q3ZMB4S8xveM2x5/download?path=%2F&files[]=TEST_FILE_LINK_SHARE1.txt&files[]=TEST_FILE_LINK_SHARE2.txt
+        url = oc_webdav_url(
+            remote_folder=os.path.join(
+                'index.php', 's',
+                shared['SHARE_LINK_TOKEN_TEST_DIR'],
+                'download?path=%2F&files%5B%5D=TEST_FILE_LINK_SHARE1.txt&files%5B%5D=TEST_FILE_LINK_SHARE2.txt'
+            ),
+            webdav_endpoint=config.oc_root
+        )
 
     download_target = os.path.join(d, '%s%s' % (shared['SHARE_LINK_TOKEN_TEST_DIR'], '.zip'))
     unzip_target = os.path.join(d, 'unzip')
