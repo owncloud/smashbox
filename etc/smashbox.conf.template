@@ -42,6 +42,7 @@ oc_root = 'owncloud'
 # webdav endpoint URI within the oc_server
 import os.path
 oc_webdav_endpoint = os.path.join(oc_root,'remote.php/webdav') # standard owncloud server
+new_oc_webdav_endpoint = os.path.join(oc_root,'remote.php/dav/files/') # new owncloud server > 10.0
 
 # target folder on the server (this may not be compatible with all tests)
 oc_server_folder = ''

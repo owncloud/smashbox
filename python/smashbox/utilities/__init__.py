@@ -350,7 +350,7 @@ def oc_public_webdav_url(protocol='http',remote_folder="",token='',password=''):
 ocsync_cnt = {}
 
 
-def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
+def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, use_new_dav_endpoint=False):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
     """
@@ -366,9 +366,20 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
+    if use_new_dav_endpoint:
+        if user_num is None:
+            username = "%s" % config.oc_account_name
+        else:
+            username = "%s%i" % (config.oc_account_name, user_num)
+        webdav_endpoint = config.new_oc_webdav_endpoint + '/' + username
+        dav_path = '--davpath' + ' ' + webdav_endpoint + ' ' \
+                   + local_folder + ' ' + oc_webdav_url('owncloud', remote_folder, user_num, webdav_endpoint=webdav_endpoint)
+    else:
+        dav_path = local_folder + ' ' + oc_webdav_url('owncloud', remote_folder, user_num)
+
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd+' '+ dav_path + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
@@ -740,19 +751,20 @@ def scrape_log_file(d, force = False):
 
 # ###### API Calls ############
 
-def get_oc_api():
+def get_oc_api(use_new_dav_endpoint=True):
     """ Returns an instance of the Client class
 
     :returns: Client instance
     """
     import owncloud
 
+    use_debug = False
     protocol = 'http'
     if config.oc_ssl_enabled:
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url, verify_certs=False)
+    oc_api = owncloud.Client(url, verify_certs=False, dav_endpoint_version=use_new_dav_endpoint, debug=use_debug)
     return oc_api
 
 

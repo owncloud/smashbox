@@ -73,13 +73,18 @@ ALL_OPERATIONS = [
     'rmdir',
 ]
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+new_webdav_endpoint = bool(config.get('new_webdav_endpoint',True))
+
 """
     Permission matrix parameters (they all default to False):
 
     - 'permission': permissions to apply
     - 'allowed_operations': allowed operations, see ALL_OPERATIONS for more info
 """
-testsets = [{ 
+testsets = [
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_ALL,
             'allowed_operations': [
@@ -98,13 +103,46 @@ testsets = [{
                 'mkdir',
                 'rmdir',
             ]
-        }
-    }, { 
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_ALL,
+            'allowed_operations': [
+                'upload',
+                'upload_overwrite',
+                'rename',
+                'move_in',
+                'move_in_overwrite',
+                'move_in_subdir',
+                'move_in_subdir_overwrite',
+                'move_out',
+                'move_out_subdir',
+                'copy_in',
+                'copy_in_overwrite',
+                'delete',
+                'mkdir',
+                'rmdir',
+            ]
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ,
             'allowed_operations': []
-        }
-    }, { 
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ,
+            'allowed_operations': []
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ | OCS_PERMISSION_CREATE,
             'allowed_operations': [
@@ -113,16 +151,42 @@ testsets = [{
                 'copy_in',
                 'mkdir',
             ]
-        }
-    }, {
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ | OCS_PERMISSION_CREATE,
+            'allowed_operations': [
+                'upload',
+                'move_in',
+                'copy_in',
+                'mkdir',
+            ]
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE,
             'allowed_operations': [
                 'upload_overwrite',
                 'rename',
             ]
-        }
-    }, {
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE,
+            'allowed_operations': [
+                'upload_overwrite',
+                'rename',
+            ]
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ | OCS_PERMISSION_DELETE,
             'allowed_operations': [
@@ -130,8 +194,21 @@ testsets = [{
                 'delete',
                 'rmdir',
             ]
-        }
-    }, {
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ | OCS_PERMISSION_DELETE,
+            'allowed_operations': [
+                'move_out',
+                'delete',
+                'rmdir',
+            ]
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
             'allowed_operations': [
@@ -142,8 +219,24 @@ testsets = [{
                 'copy_in',
                 'mkdir',
             ]
-        }
-    }, {
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
+            'allowed_operations': [
+                'upload',
+                'upload_overwrite',
+                'rename',
+                'move_in',
+                'copy_in',
+                'mkdir',
+            ]
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_DELETE,
             'allowed_operations': [
@@ -160,8 +253,30 @@ testsets = [{
                 'mkdir',
                 'rmdir',
             ]
-        }
-    }, {
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_DELETE,
+            'allowed_operations': [
+                'upload',
+                'move_in',
+                'move_in_overwrite',
+                'move_in_subdir',
+                'move_in_subdir_overwrite',
+                'move_out',
+                'move_out_subdir',
+                'copy_in',
+                'copy_in_overwrite',
+                'delete',
+                'mkdir',
+                'rmdir',
+            ]
+        },
+        'new_webdav_endpoint': True
+    },
+    {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE | OCS_PERMISSION_DELETE,
             'allowed_operations': [
@@ -171,7 +286,21 @@ testsets = [{
                 'delete',
                 'rmdir',
             ]
-        }
+        },
+        'new_webdav_endpoint': False
+    },
+    {
+        'sharePermissions_matrix': {
+            'permission': OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE | OCS_PERMISSION_DELETE,
+            'allowed_operations': [
+                'upload_overwrite',
+                'rename',
+                'move_out',
+                'delete',
+                'rmdir',
+            ]
+        },
+        'new_webdav_endpoint': True
     }
 ]
 
@@ -179,8 +308,17 @@ permission_matrix = config.get('sharePermissions_matrix', testsets[0]['sharePerm
 
 SHARED_DIR_NAME = 'shared-dir'
 
+def finish_if_not_capable():
+    if compare_oc_version('10.0', '<') and new_webdav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint not capable")
+        return True
+    return False
+
 @add_worker
 def setup(step):
+    if finish_if_not_capable():
+        return
 
     step (1, 'create test users')
     reset_owncloud_account(num_test_users=2)
@@ -190,6 +328,8 @@ def setup(step):
 
 @add_worker
 def owner_worker(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Create workdir')
     d = make_workdir()
@@ -217,7 +357,7 @@ def owner_worker(step):
     createfile(os.path.join(d, SHARED_DIR_NAME, 'delete_this_dir', 'stuff.dat'),'0',count=1000,bs=1)
 
     list_files(d)
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
     list_files(d)
 
     step (4, 'Shares folder with recipient')
@@ -231,16 +371,18 @@ def owner_worker(step):
 
 @add_worker
 def recipient_worker(step):
+    if finish_if_not_capable():
+        return
     step (2, 'Create workdir')
     d = make_workdir()
 
     step (5, 'Check permission enforcement for every operation')
 
     list_files(d)
-    run_ocsync(d, user_num=2)
+    run_ocsync(d, user_num=2, use_new_dav_endpoint=new_webdav_endpoint)
     list_files(d)
 
-    oc = get_oc_api()
+    oc = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
     user2 = "%s%i" % (config.oc_account_name, 2)
     oc.login(user2, config.oc_account_password)
 
