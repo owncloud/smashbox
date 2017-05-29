@@ -740,7 +740,7 @@ def scrape_log_file(d, force = False):
 
 # ###### API Calls ############
 
-def get_oc_api():
+def get_oc_api(new_dav = True, debug_mode = False):
     """ Returns an instance of the Client class
 
     :returns: Client instance
@@ -752,7 +752,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url, verify_certs=False)
+    oc_api = owncloud.Client(url, verify_certs=False, debug=debug_mode, dav_endpoint_version=new_dav)
     return oc_api
 
 

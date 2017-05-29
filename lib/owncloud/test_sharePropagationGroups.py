@@ -45,6 +45,9 @@ import os.path
 import re
 import operator as op
 
+set_new_dav = False
+set_debug_mode = True
+
 def get_group_name(i):
     return '%s%i' % (config.oc_group_name, i)
 
@@ -74,7 +77,7 @@ def compare_list(list1, list2, func):
 def get_client_etags(clients):
     new_etags = []
     for client in clients:
-        new_etags.append(client.file_info('/').get_etag())
+        new_etags.append(client.file_info('/testfolder/').get_etag())
 
     return new_etags
 
@@ -118,33 +121,33 @@ def owner(step):
     step (2, 'Create workdir')
     d = make_workdir()
 
-    mkdir(os.path.join(d, 'test', 'sub'))
+    mkdir(os.path.join(d, 'testfolder', 'test', 'sub'))
     run_ocsync(d, user_num=1)
 
-    client = get_oc_api()
+    client = get_oc_api(new_dav = set_new_dav, debug_mode = set_debug_mode)
     client.login(user, config.oc_account_password)
     # make sure folder is shared
     group1 = get_group_name(1)
-    share1_data = client.share_file_with_group('/test', group1, perms=31)
+    share1_data = client.share_file_with_group('/testfolder/test', group1, perms=31)
     fatal_check(share1_data, 'failed sharing a file with %s' % (group1,))
 
     group2 = get_group_name(2)
-    share2_data = client.share_file_with_group('/test', group2, perms=31)
+    share2_data = client.share_file_with_group('/testfolder/test', group2, perms=31)
     fatal_check(share2_data, 'failed sharing a file with %s' % (group2,))
 
-    root_etag = client.file_info('/').get_etag()
+    root_etag = client.file_info('/testfolder/').get_etag()
 
     step(3, 'Upload file')
-    createfile(os.path.join(d, 'test', 'test.txt'), '1', count=1000, bs=10)
+    createfile(os.path.join(d, 'testfolder', 'test', 'test.txt'), '1', count=1000, bs=10)
     run_ocsync(d, user_num=1)
 
     step(4, 'Verify etag propagation')
-    root_etag2 = client.file_info('/').get_etag()
+    root_etag2 = client.file_info('/testfolder/').get_etag()
     error_check(root_etag != root_etag2, 'owner uploads /test/test.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag, root_etag2))
 
     step(6, 'verify another etag propagation')
-    root_etag3 = client.file_info('/').get_etag()
+    root_etag3 = client.file_info('/testfolder/').get_etag()
     error_check(root_etag2 != root_etag3, 'recipients upload to /test/test2.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag2, root_etag3))
 
@@ -153,33 +156,33 @@ def owner(step):
     client.delete_share(share2_data.share_id)
 
     step(8, 'verify etag propagation')
-    root_etag4 = client.file_info('/').get_etag()
+    root_etag4 = client.file_info('/testfolder/').get_etag()
     error_check(root_etag3 == root_etag4, 'owner unshares '
                 'etag for / previous [%s] new [%s]' % (root_etag3, root_etag4))
 
     step(9, 'share again the files')
-    share1_data = client.share_file_with_group('/test', group1, perms=31)
+    share1_data = client.share_file_with_group('/testfolder/test', group1, perms=31)
     fatal_check(share1_data, 'failed sharing a file with %s' % (group1,))
-    share2_data = client.share_file_with_group('/test', group2, perms=31)
+    share2_data = client.share_file_with_group('/testfolder/test', group2, perms=31)
     fatal_check(share2_data, 'failed sharing a file with %s' % (group2,))
 
     step(11, 'verify etag propagation')
-    root_etag5 = client.file_info('/').get_etag()
+    root_etag5 = client.file_info('/testfolder/').get_etag()
     error_check(root_etag4 == root_etag5, 'recipient 2 reshares /test to recipient 4 '
                 'etag for / previous [%s] new [%s]' % (root_etag4, root_etag5))
 
     step(13, 'verify etag propagation')
-    root_etag6 = client.file_info('/').get_etag()
+    root_etag6 = client.file_info('/testfolder/').get_etag()
     error_check(root_etag5 != root_etag6, 'recipient 2 uploads to /test/test3.txt '
                 'etag for / previous [%s] new [%s]' % (root_etag5, root_etag6))
 
     step(15, 'verify etag propagation')
-    root_etag7 = client.file_info('/').get_etag()
+    root_etag7 = client.file_info('/testfolder/').get_etag()
     error_check(root_etag6 != root_etag7, 'recipient 4 uploads /test/test4.txt through reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag6, root_etag7))
 
     step(17, 'verify etag is the same')
-    root_etag8 = client.file_info('/').get_etag()
+    root_etag8 = client.file_info('/testfolder/').get_etag()
     # It shoudn't be propagated here in this case
     error_check(root_etag7 == root_etag8, 'recipient 2 unshares the reshare '
                 'etag for / previous [%s] new [%s]' % (root_etag7, root_etag8))
@@ -193,19 +196,21 @@ def recipients(step):
 
     d = make_workdir()
     for usernum in group_map[group]:
-        mkdir(os.path.join(d, str(usernum)))
+        mkdir(os.path.join(d, str(usernum), 'testfolder'))
 
     run_group_ocsync(d, group)
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api()
+        client = get_oc_api(new_dav=set_new_dav, debug_mode=set_debug_mode)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 
     root_etags = get_client_etags(clients)
 
-    step(4, 'verify etag propagation')
+    step(4, 'move incoming share to testfolder and verify etag propagation')
+    for client in clients:
+        client.move('/test','/testfolder/test')
     run_group_ocsync(d, group)
 
     root_etags2 = get_client_etags(clients)
@@ -215,7 +220,7 @@ def recipients(step):
     step(5, 'upload to shared folder')
     # Create a file just in one of the users of the group
     if groupnum is 1:
-        createfile(os.path.join(d, str(group_map[group][0]), 'test', 'test2.txt'), '2', count=1000, bs=10)
+        createfile(os.path.join(d, str(group_map[group][0]), 'testfolder', 'test', 'test2.txt'), '2', count=1000, bs=10)
         # the group sync is done sequentially so there shouldn't be issues syncing
         run_group_ocsync(d, group)
 
@@ -231,10 +236,12 @@ def recipients(step):
     error_check(compare_list(root_etags3, root_etags4, op.ne), 'owner unshares '
                 'etag for / previous [%s] new [%s]' % (root_etags3, root_etags4))
 
-    step(10, 'reshare file')
+    step(10, 'move incoming share to testfolder and reshare file')
+    for client in clients:
+        client.move('/test','/testfolder/test')
     if groupnum is 1:
         # first user of the group1 reshares /test to group
-        share_data = clients[0].share_file_with_group('/test', get_group_name(3), perms=31)
+        share_data = clients[0].share_file_with_group('/testfolder/test', get_group_name(3), perms=31)
 
     step(11, 'verify etag propagation')
     root_etags5 = get_client_etags(clients)
@@ -243,7 +250,7 @@ def recipients(step):
 
     step(12, 'recipient 2 upload a file')
     if groupnum is 1:
-        createfile(os.path.join(d, str(group_map[group][0]), 'test', 'test3.txt'), '3', count=1000, bs=10)
+        createfile(os.path.join(d, str(group_map[group][0]), 'testfolder', 'test', 'test3.txt'), '3', count=1000, bs=10)
         run_group_ocsync(d, group)
 
     step(13, 'verify etag propagation')
@@ -278,18 +285,20 @@ def recipient_3(step):
 
     d = make_workdir()
     for usernum in group_map[group]:
-        mkdir(os.path.join(d, str(usernum)))
+        mkdir(os.path.join(d, str(usernum), 'testfolder'))
     run_group_ocsync(d, group)
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api()
+        client = get_oc_api(new_dav=set_new_dav, debug_mode=set_debug_mode)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 
     root_etags = get_client_etags(clients)
 
-    step(11, 'verify etag propagation')
+    step(11, 'move incoming share to testfolder and verify etag propagation')
+    for client in clients:
+        client.move('/test','/testfolder/test')
     root_etags5 = get_client_etags(clients)
     error_check(compare_list(root_etags, root_etags5, op.ne), 'recipient 2 reshares /test to recipient 4 '
                 'etag for / previous [%s] new [%s]' % (root_etags, root_etags5))
@@ -302,7 +311,7 @@ def recipient_3(step):
 
     step(14, 'upload file')
     # just the first first user of the group uploads the file
-    createfile(os.path.join(d, str(group_map[group][0]), 'test', 'test4.txt'), '4', count=1000, bs=10)
+    createfile(os.path.join(d, str(group_map[group][0]), 'testfolder', 'test', 'test4.txt'), '4', count=1000, bs=10)
     run_group_ocsync(d, group)
 
     step(15, 'verify etag propagation')
