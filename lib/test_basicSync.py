@@ -27,10 +27,18 @@ filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 # False => keep the loser 
 rmLocalStateDB = bool(config.get('basicSync_rmLocalStateDB',False))
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+new_webdav_endpoint = bool(config.get('new_webdav_endpoint',True))
 
 testsets = [
         { 'basicSync_filesizeKB': 1, 
-          'basicSync_rmLocalStateDB':False
+          'basicSync_rmLocalStateDB':False,
+          'new_webdav_endpoint':True
+        },
+        { 'basicSync_filesizeKB': 1,
+          'basicSync_rmLocalStateDB':False,
+          'new_webdav_endpoint':False
         },
         { 'basicSync_filesizeKB': 5000, 
           'basicSync_rmLocalStateDB':False
@@ -39,11 +47,21 @@ testsets = [
           'basicSync_rmLocalStateDB':False
         },
         { 'basicSync_filesizeKB': 50000, 
-          'basicSync_rmLocalStateDB':False
+          'basicSync_rmLocalStateDB':False,
+          'new_webdav_endpoint':True
+        },
+        { 'basicSync_filesizeKB': 50000,
+          'basicSync_rmLocalStateDB':False,
+          'new_webdav_endpoint':False
         },
 
         { 'basicSync_filesizeKB': 1, 
-          'basicSync_rmLocalStateDB':True
+          'basicSync_rmLocalStateDB':True,
+          'new_webdav_endpoint':True
+        },
+        { 'basicSync_filesizeKB': 1,
+          'basicSync_rmLocalStateDB':True,
+          'new_webdav_endpoint':False
         },
         { 'basicSync_filesizeKB': 5000, 
           'basicSync_rmLocalStateDB':True
@@ -52,7 +70,12 @@ testsets = [
           'basicSync_rmLocalStateDB':True
         },
         { 'basicSync_filesizeKB': 50000, 
-          'basicSync_rmLocalStateDB':True
+          'basicSync_rmLocalStateDB':True,
+          'new_webdav_endpoint':True
+        },
+        { 'basicSync_filesizeKB': 50000,
+          'basicSync_rmLocalStateDB':True,
+          'new_webdav_endpoint':False
         }
 ]
 
@@ -91,10 +114,18 @@ def expect_conflict_files(d,expected_conflict_files):
 def expect_no_conflict_files(d):
     expect_conflict_files(d,[])
 
+def finish_if_not_capable():
+    if compare_oc_version('10.0', '<') and new_webdav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint not capable")
+        return True
+    return False
     
 @add_worker
 def creator(step):
-    
+    if finish_if_not_capable():
+        return
+
     reset_owncloud_account()
     reset_rundir()
 
@@ -120,11 +151,11 @@ def creator(step):
     logger.info('md5_creator: %s',shared['md5_creator'])
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=new_webdav_endpoint)
     list_files(d)
 
     step(7,'download the repository')
-    run_ocsync(d,n=3)
+    run_ocsync(d,n=3, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(8,'final check')
 
@@ -133,10 +164,13 @@ def creator(step):
 
 @add_worker
 def winner(step):
+    if finish_if_not_capable():
+        return
+
     step(2,'initial sync')
 
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(3,'modify locally and sync to server')
 
@@ -155,11 +189,11 @@ def winner(step):
     shared['md5_winner'] = md5sum(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'))
     logger.info('md5_winner: %s',shared['md5_winner'])
 
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(5,'final sync')
 
-    run_ocsync(d,n=3)
+    run_ocsync(d,n=3, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(8,'final check')
 
@@ -171,11 +205,13 @@ def winner(step):
 
 @add_worker
 def loser(step):
+    if finish_if_not_capable():
+        return
 
     step(2,'initial sync')
 
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(4,'modify locally and sync to the server')
 
@@ -204,10 +240,10 @@ def loser(step):
     if rmLocalStateDB:
         remove_db_in_folder(d)
 
-    run_ocsync(d,n=3) # conflict file will be synced to the server but it requires more than one sync run
+    run_ocsync(d,n=3, use_new_dav_endpoint=new_webdav_endpoint) # conflict file will be synced to the server but it requires more than one sync run
 
     step(6,'final sync')
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(8,'final check')
 
@@ -222,11 +258,14 @@ def loser(step):
 
 @add_worker
 def checker(step):
+    if finish_if_not_capable():
+        return
+
     shared = reflection.getSharedObject()
 
     step(7,'download the repository for final verification')
     d = make_workdir()
-    run_ocsync(d,n=3)
+    run_ocsync(d,n=3, use_new_dav_endpoint=new_webdav_endpoint)
 
     step(8,'final check')
 

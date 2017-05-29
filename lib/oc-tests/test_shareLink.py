@@ -148,7 +148,7 @@ def public_downloader_selected_single_files(step):
 
     shared = reflection.getSharedObject()
 
-    if compare_oc_version('9.1', '<='):
+    if compare_oc_version('10.0', '<'):
         url = oc_webdav_url(
             remote_folder=os.path.join(
                 'index.php', 's',
@@ -283,7 +283,7 @@ def public_downloader_selected_files(step):
     shared = reflection.getSharedObject()
 
 
-    if compare_oc_version('9.1', '<='):
+    if compare_oc_version('10.0', '<'):
         url = oc_webdav_url(
             remote_folder=os.path.join(
                 'index.php', 's',
