@@ -47,14 +47,14 @@ import operator as op
 
 # True => use new webdav endpoint (dav/files)
 # False => use old webdav endpoint (webdav)
-new_webdav_endpoint = bool(config.get('new_webdav_endpoint',True))
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
 
 testsets = [
         {
-          'new_webdav_endpoint':False
+          'use_new_dav_endpoint':False
         },
         {
-          'new_webdav_endpoint':True
+          'use_new_dav_endpoint':True
         }
 ]
 
@@ -93,7 +93,7 @@ def get_client_etags(clients):
 
 def run_group_ocsync(d, group_name):
     for usernum in group_map[group_name]:
-        run_ocsync(os.path.join(d, str(usernum)), user_num=usernum, use_new_dav_endpoint=new_webdav_endpoint)
+        run_ocsync(os.path.join(d, str(usernum)), user_num=usernum, use_new_dav_endpoint=use_new_dav_endpoint)
 
 def parse_worker_number(worker_name):
     match = re.search(r'(\d+)$', worker_name)
@@ -103,9 +103,10 @@ def parse_worker_number(worker_name):
         return None
 
 def finish_if_not_capable():
-    if compare_oc_version('10.0', '<') and new_webdav_endpoint == True:
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
         #Dont test for <= 9.1 with new endpoint, since it is not supported
-        logger.warn("Skipping test since webdav endpoint not capable")
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
         return True
     return False
 
@@ -143,9 +144,9 @@ def owner(step):
     d = make_workdir()
 
     mkdir(os.path.join(d, 'test', 'sub'))
-    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
-    client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+    client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
     client.login(user, config.oc_account_password)
     # make sure folder is shared
     group1 = get_group_name(1)
@@ -160,7 +161,7 @@ def owner(step):
 
     step(3, 'Upload file')
     createfile(os.path.join(d, 'test', 'test.txt'), '1', count=1000, bs=10)
-    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(4, 'Verify etag propagation')
     root_etag2 = client.file_info('/').get_etag()
@@ -225,7 +226,7 @@ def recipients(step):
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+        client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 
@@ -299,7 +300,7 @@ def recipients(step):
 def recipient_3(step):
     if finish_if_not_capable():
         return
-    
+
     groupnum = parse_worker_number(reflection.getProcessName())
     group = get_group_name(groupnum)
 
@@ -312,7 +313,7 @@ def recipient_3(step):
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+        client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 

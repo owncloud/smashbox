@@ -75,7 +75,7 @@ ALL_OPERATIONS = [
 
 # True => use new webdav endpoint (dav/files)
 # False => use old webdav endpoint (webdav)
-new_webdav_endpoint = bool(config.get('new_webdav_endpoint',True))
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
 
 """
     Permission matrix parameters (they all default to False):
@@ -104,7 +104,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -126,21 +126,21 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ,
             'allowed_operations': []
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
             'permission': OCS_PERMISSION_READ,
             'allowed_operations': []
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
@@ -152,7 +152,7 @@ testsets = [
                 'mkdir',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -164,7 +164,7 @@ testsets = [
                 'mkdir',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
@@ -174,7 +174,7 @@ testsets = [
                 'rename',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -184,7 +184,7 @@ testsets = [
                 'rename',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
@@ -195,7 +195,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -206,7 +206,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
@@ -220,7 +220,7 @@ testsets = [
                 'mkdir',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -234,7 +234,7 @@ testsets = [
                 'mkdir',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
@@ -254,7 +254,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -274,7 +274,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     },
     {
         'sharePermissions_matrix': {
@@ -287,7 +287,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': False
+        'use_new_dav_endpoint': False
     },
     {
         'sharePermissions_matrix': {
@@ -300,7 +300,7 @@ testsets = [
                 'rmdir',
             ]
         },
-        'new_webdav_endpoint': True
+        'use_new_dav_endpoint': True
     }
 ]
 
@@ -309,9 +309,10 @@ permission_matrix = config.get('sharePermissions_matrix', testsets[0]['sharePerm
 SHARED_DIR_NAME = 'shared-dir'
 
 def finish_if_not_capable():
-    if compare_oc_version('10.0', '<') and new_webdav_endpoint == True:
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
         #Dont test for <= 9.1 with new endpoint, since it is not supported
-        logger.warn("Skipping test since webdav endpoint not capable")
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
         return True
     return False
 
@@ -357,7 +358,7 @@ def owner_worker(step):
     createfile(os.path.join(d, SHARED_DIR_NAME, 'delete_this_dir', 'stuff.dat'),'0',count=1000,bs=1)
 
     list_files(d)
-    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (4, 'Shares folder with recipient')
@@ -379,10 +380,10 @@ def recipient_worker(step):
     step (5, 'Check permission enforcement for every operation')
 
     list_files(d)
-    run_ocsync(d, user_num=2, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
-    oc = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+    oc = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
     user2 = "%s%i" % (config.oc_account_name, 2)
     oc.login(user2, config.oc_account_password)
 
