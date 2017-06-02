@@ -52,14 +52,14 @@ import operator as op
 
 # True => use new webdav endpoint (dav/files)
 # False => use old webdav endpoint (webdav)
-new_webdav_endpoint = bool(config.get('new_webdav_endpoint',True))
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
 
 testsets = [
         {
-          'new_webdav_endpoint':False
+          'use_new_dav_endpoint':False
         },
         {
-          'new_webdav_endpoint':True
+          'use_new_dav_endpoint':True
         }
 ]
 
@@ -99,12 +99,13 @@ def get_client_etags(clients, path):
 
 def run_group_ocsync(d, group_name):
     for usernum in group_map[group_name]:
-        run_ocsync(os.path.join(d, str(usernum)), user_num=usernum, use_new_dav_endpoint=new_webdav_endpoint)
+        run_ocsync(os.path.join(d, str(usernum)), user_num=usernum, use_new_dav_endpoint=use_new_dav_endpoint)
 
 def finish_if_not_capable():
-    if compare_oc_version('10.0', '<') and new_webdav_endpoint == True:
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
         #Dont test for <= 9.1 with new endpoint, since it is not supported
-        logger.warn("Skipping test since webdav endpoint not capable")
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
         return True
     return False
 
@@ -142,9 +143,9 @@ def owner(step):
     d = make_workdir()
 
     mkdir(os.path.join(d, 'test', 'sub'))
-    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
-    client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+    client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
     client.login(user, config.oc_account_password)
     # make sure folder is shared
     group1 = get_group_name(1)
@@ -161,7 +162,7 @@ def owner(step):
 
     step(5, 'Upload to /test')
     createfile(os.path.join(d, 'test', 'test2.txt'), '2', count=1000, bs=10)
-    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(6, 'verify etag propagation')
     root_etag2 = client.file_info('/').get_etag()
@@ -175,7 +176,7 @@ def owner(step):
 
     step(9, 'Upload to /test/sub')
     createfile(os.path.join(d, 'test', 'sub', 'test4.txt'), '4', count=1000, bs=10)
-    run_ocsync(d, user_num=1, use_new_dav_endpoint=new_webdav_endpoint)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(10, 'verify etag propagation')
     root_etag4 = client.file_info('/').get_etag()
@@ -226,7 +227,7 @@ def recipient1(step):
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+        client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 
@@ -299,7 +300,7 @@ def recipient2(step):
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+        client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 
@@ -385,7 +386,7 @@ def recipient3(step):
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+        client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 
@@ -452,7 +453,7 @@ def recipient4(step):
 
     clients = []
     for usernum in group_map[group]:
-        client = get_oc_api(use_new_dav_endpoint=new_webdav_endpoint)
+        client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
         client.login(get_account_name(usernum), config.oc_account_password)
         clients.append(client)
 

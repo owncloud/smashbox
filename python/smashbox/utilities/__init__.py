@@ -366,20 +366,15 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, use_new_da
 
     local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
-    if use_new_dav_endpoint:
-        if user_num is None:
-            username = "%s" % config.oc_account_name
-        else:
-            username = "%s%i" % (config.oc_account_name, user_num)
-        webdav_endpoint = config.new_oc_webdav_endpoint + '/' + username
-        dav_path = '--davpath' + ' ' + webdav_endpoint + ' ' \
-                   + local_folder + ' ' + oc_webdav_url('owncloud', remote_folder, user_num, webdav_endpoint=webdav_endpoint)
-    else:
-        dav_path = local_folder + ' ' + oc_webdav_url('owncloud', remote_folder, user_num)
+    # Force using old endpointif required, for owncloud client it is done by disabling chunking ng
+    if not use_new_dav_endpoint:
+        os.environ["OWNCLOUD_CHUNKING_NG"] = "0"
+    elif "OWNCLOUD_CHUNKING_NG" in os.environ:
+        del os.environ['OWNCLOUD_CHUNKING_NG']
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+ dav_path + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
