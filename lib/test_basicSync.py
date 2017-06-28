@@ -32,19 +32,13 @@ rmLocalStateDB = bool(config.get('basicSync_rmLocalStateDB',False))
 use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
 
 testsets = [
-        { 'basicSync_filesizeKB': 1, 
+        { 'basicSync_filesizeKB': 1000,
           'basicSync_rmLocalStateDB':False,
           'use_new_dav_endpoint':True
         },
-        { 'basicSync_filesizeKB': 1,
+        { 'basicSync_filesizeKB': 1000,
           'basicSync_rmLocalStateDB':False,
           'use_new_dav_endpoint':False
-        },
-        { 'basicSync_filesizeKB': 5000, 
-          'basicSync_rmLocalStateDB':False
-        },
-        { 'basicSync_filesizeKB': 15000, 
-          'basicSync_rmLocalStateDB':False
         },
         { 'basicSync_filesizeKB': 50000, 
           'basicSync_rmLocalStateDB':False,
@@ -54,20 +48,13 @@ testsets = [
           'basicSync_rmLocalStateDB':False,
           'use_new_dav_endpoint':False
         },
-
-        { 'basicSync_filesizeKB': 1, 
+        { 'basicSync_filesizeKB': 1000,
           'basicSync_rmLocalStateDB':True,
           'use_new_dav_endpoint':True
         },
-        { 'basicSync_filesizeKB': 1,
+        { 'basicSync_filesizeKB': 1000,
           'basicSync_rmLocalStateDB':True,
           'use_new_dav_endpoint':False
-        },
-        { 'basicSync_filesizeKB': 5000, 
-          'basicSync_rmLocalStateDB':True
-        },
-        { 'basicSync_filesizeKB': 15000, 
-          'basicSync_rmLocalStateDB':True
         },
         { 'basicSync_filesizeKB': 50000, 
           'basicSync_rmLocalStateDB':True,
