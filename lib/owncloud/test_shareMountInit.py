@@ -58,6 +58,19 @@ import os.path
 import re
 import operator as op
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
+
+testsets = [
+        {
+          'use_new_dav_endpoint':False
+        },
+        {
+          'use_new_dav_endpoint':True
+        }
+]
+
 def get_group_name(i):
     return '%s%i' % (config.oc_group_name, i)
 
@@ -74,7 +87,7 @@ group_map = {
 
 def run_group_ocsync(d, group_name):
     for usernum in group_map[group_name]:
-        run_ocsync(os.path.join(d, str(usernum)), user_num=usernum)
+        run_ocsync(os.path.join(d, str(usernum)), user_num=usernum, use_new_dav_endpoint=use_new_dav_endpoint)
 
 @add_worker
 def setup(step):
@@ -97,9 +110,19 @@ def setup(step):
         for user in group_map[group]:
             add_user_to_group(get_account_name(user), group)
 
+def finish_if_not_capable():
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
+        return True
+    return False
 
 @add_worker
 def owner(step):
+    if finish_if_not_capable():
+        return
+
     user = '%s%i' % (config.oc_account_name, 1)
 
     step (2, 'Create workdir')
@@ -114,9 +137,9 @@ def owner(step):
 
     createfile(os.path.join(d, 'TEST_SHARE_FILE.dat'), '01', count=100, bs=10)
     shared['TEST_SHARE_FILE'] = md5sum(os.path.join(d, 'TEST_SHARE_FILE.dat'))
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
-    client = get_oc_api()
+    client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
     client.login(user, config.oc_account_password)
 
     # Share with Group users R2 and R3
@@ -148,11 +171,11 @@ def owner(step):
     modify_file(os.path.join(d,'TEST_SHARE_FILE.dat'),'11',count=100,bs=10)
     shared['TEST_SHARE_FILE'] = md5sum(os.path.join(d, 'TEST_SHARE_FILE.dat'))
 
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(6, 'Resync and check')
 
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -169,7 +192,7 @@ def owner(step):
 
     step(8, 'Resync and check')
 
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -186,12 +209,15 @@ def owner(step):
 
 @add_worker
 def ownerRecipient(step):
+    if finish_if_not_capable():
+        return
+
     step (2, 'Create workdir')
     d = make_workdir()
 
     step (4, 'Sync and check required files')
 
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folder has been synced down
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -203,7 +229,7 @@ def ownerRecipient(step):
 
     step(6, 'Resync and check')
 
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -223,7 +249,7 @@ def ownerRecipient(step):
 
     step(8, 'Resync and check')
 
-    run_ocsync(d, user_num=1)
+    run_ocsync(d, user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -243,6 +269,9 @@ def ownerRecipient(step):
 
 @add_worker
 def recipient2(step):
+    if finish_if_not_capable():
+        return
+
     user = '%s%i' % (config.oc_account_name, 2)
 
     step (2, 'Create workdir')
@@ -251,7 +280,7 @@ def recipient2(step):
     group2 = get_group_name(2)
     step(3, 'Reshare /TEST_RESHARE_SUBFOLDER/SUB with %s' % (group2))
 
-    client = get_oc_api()
+    client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
     client.login(user, config.oc_account_password)
     # only the first user of the group shares with another group, to keep it simple
     share1_data = client.share_file_with_group('/TEST_RESHARE_SUBFOLDER/SUB', group2, perms=31)
@@ -259,7 +288,7 @@ def recipient2(step):
 
     step(4, 'Sync and check required files')
 
-    run_ocsync(d, user_num=2)
+    run_ocsync(d, user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that shared folder exists
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -271,11 +300,11 @@ def recipient2(step):
     shared['TEST_RESHARE_SUBFOLDER_SUB_FILE'] = md5sum(
         os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB', 'TEST_RESHARE_SUBFOLDER_SUB_FILE.dat'))
 
-    run_ocsync(d, user_num=2)
+    run_ocsync(d, user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(6, 'Resync and check')
 
-    run_ocsync(d, user_num=2)
+    run_ocsync(d, user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -292,7 +321,7 @@ def recipient2(step):
 
     step(8, 'Resync and check')
 
-    run_ocsync(d, user_num=2)
+    run_ocsync(d, user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -310,6 +339,9 @@ def recipient2(step):
 
 @add_worker
 def recipient3(step):
+    if finish_if_not_capable():
+        return
+
     user = '%s%i' % (config.oc_account_name, 3)
 
     step (2, 'Create workdir')
@@ -318,7 +350,7 @@ def recipient3(step):
     group2 = get_group_name(2)
     step(3, 'Reshare /TEST_RESHARE_FILE.dat with %s' % (group2))
 
-    client = get_oc_api()
+    client = get_oc_api(use_new_dav_endpoint=use_new_dav_endpoint)
     client.login(user, config.oc_account_password)
     # only the first user of the group shares with another group, to keep it simple
     share1_data = client.share_file_with_group('/TEST_RESHARE_FILE.dat', group2, perms=31)
@@ -327,7 +359,7 @@ def recipient3(step):
 
     step(4, 'Sync and check required files')
 
-    run_ocsync(d, user_num=3)
+    run_ocsync(d, user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that shared folder exists
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -342,11 +374,11 @@ def recipient3(step):
     shared['TEST_RESHARE_FILE'] = md5sum(
         os.path.join(d, 'TEST_RESHARE_FILE.dat'))
 
-    run_ocsync(d, user_num=3)
+    run_ocsync(d, user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(6, 'Resync and check')
 
-    run_ocsync(d, user_num=3)
+    run_ocsync(d, user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -363,7 +395,7 @@ def recipient3(step):
 
     step(8, 'Resync and check')
 
-    run_ocsync(d, user_num=3)
+    run_ocsync(d, user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'TEST_RESHARE_SUBFOLDER', 'SUB'))
@@ -380,6 +412,9 @@ def recipient3(step):
 
 @add_worker
 def recipient4(step):
+    if finish_if_not_capable():
+        return
+
     user = '%s%i' % (config.oc_account_name, 4)
 
     step (2, 'Create workdir')
@@ -387,7 +422,7 @@ def recipient4(step):
 
     step(6, 'Initialize share mounts (sync and check)')
 
-    run_ocsync(d, user_num=4)
+    run_ocsync(d, user_num=4, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'SUB'))
@@ -418,11 +453,11 @@ def recipient4(step):
     mv(os.path.join(d, 'TEST_RESHARE_FILE.dat'), (os.path.join(d, 'RESHARED_ITEMS')))
     mv(os.path.join(d, 'SUB'), (os.path.join(d, 'RESHARED_ITEMS')))
 
-    run_ocsync(d, user_num=4)
+    run_ocsync(d, user_num=4, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(10, 'Sync and check')
 
-    run_ocsync(d, user_num=4)
+    run_ocsync(d, user_num=4, use_new_dav_endpoint=use_new_dav_endpoint)
 
     # Check that folders have been synced down correctly
     expect_exists(os.path.join(d, 'RESHARED_ITEMS', 'SUB'))
