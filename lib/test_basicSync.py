@@ -20,6 +20,7 @@ Note on effects of removing local state db (1.6):
 from smashbox.utilities import * 
 
 import glob
+import time
 
 filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 
@@ -142,8 +143,13 @@ def creator(step):
     run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
+    time.sleep(1)
+
     step(7,'download the repository')
+
     run_ocsync(d,n=3, use_new_dav_endpoint=use_new_dav_endpoint)
+
+    time.sleep(1)
 
     step(8,'final check')
 
@@ -179,9 +185,13 @@ def winner(step):
 
     run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
+    time.sleep(1)
+
     step(5,'final sync')
 
     run_ocsync(d,n=3, use_new_dav_endpoint=use_new_dav_endpoint)
+
+    time.sleep(1)
 
     step(8,'final check')
 
@@ -230,8 +240,13 @@ def loser(step):
 
     run_ocsync(d,n=3, use_new_dav_endpoint=use_new_dav_endpoint) # conflict file will be synced to the server but it requires more than one sync run
 
+    time.sleep(1)
+
     step(6,'final sync')
+
     run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
+
+    time.sleep(1)
 
     step(8,'final check')
 
@@ -253,7 +268,10 @@ def checker(step):
 
     step(7,'download the repository for final verification')
     d = make_workdir()
+    
     run_ocsync(d,n=3, use_new_dav_endpoint=use_new_dav_endpoint)
+
+    time.sleep(1)
 
     step(8,'final check')
 
