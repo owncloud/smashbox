@@ -75,7 +75,8 @@ def workerB(step):
     
     error_check(os.path.exists(os.path.join(syncdir, 'folder1/file.txt')), 
                 "folder1/file.txt should have been restored ")
-    
-    error_check(len(glob.glob(os.path.join(syncdir,'file2_conflict-*'))) == 1, 
+
+    conflict_files = get_conflict_files(syncdir)
+    error_check(len(conflict_files) == 1,
                 "file2 should have been backed up as a conflict ")
     
