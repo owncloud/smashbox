@@ -5,6 +5,7 @@ import datetime
 import subprocess
 import time
 import requests
+import glob
 
 # Utilities to be used in the test-cases.
 from smashbox.utilities.version import version_compare
@@ -293,6 +294,12 @@ def create_owncloud_group(group_name):
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
     oc_api.create_group(group_name)
 
+def get_conflict_files(d):
+    conflict_files = []
+    conflict_files.extend(glob.glob(os.path.join(d,'*_conflict-*-*'))) # earlier versions use _conflic
+    conflict_files.extend(glob.glob(os.path.join(d,'*conflicted copy*'))) # since 2.4 conflic files are marked differently
+
+    return conflict_files
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 

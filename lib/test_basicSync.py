@@ -85,7 +85,7 @@ def expect_deleted_files(d,expected_deleted_files):
  
 
 def expect_conflict_files(d,expected_conflict_files):
-    actual_conflict_files = glob.glob(os.path.join(d,'*_conflict-*-*'))
+    actual_conflict_files = get_conflict_files(d)
 
     logger.debug('conflict files in %s: %s',d,actual_conflict_files)
 
@@ -101,6 +101,33 @@ def expect_conflict_files(d,expected_conflict_files):
     
 def expect_no_conflict_files(d):
     expect_conflict_files(d,[])
+
+def final_check(d,shared):
+    """ This is the final check applicable to all workers - this reflects the status of the remote repository so everyone should be in sync.
+    The only potential differences are with locally generated conflict files.
+    """
+
+    list_files(d)
+    expect_content(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'), shared['md5_creator'])
+
+    expect_content(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'), shared['md5_loser'])
+
+    if not rmLocalStateDB:
+        expect_content(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'), shared['md5_loser'])
+    else:
+        expect_content(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'), shared['md5_creator']) # in this case, a conflict is created on the loser and file on the server stays the same
+
+    expect_content(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'), shared['md5_winner'])
+    expect_content(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'), shared['md5_winner'])
+    expect_content(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'), shared['md5_winner'])     # a conflict on the loser, server not changed
+    expect_content(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'), shared['md5_winner'])  # a conflict on the loser, server not changed
+
+    if not rmLocalStateDB:
+        expect_no_deleted_files(d) # normally any deleted files should not come back
+    else:
+        expect_deleted_files(d, ['TEST_FILE_DELETED_LOSER.dat', 'TEST_FILE_DELETED_WINNER.dat']) # but not TEST_FILE_DELETED_BOTH.dat !
+        expect_content(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'), shared['md5_creator']) # this file should be downloaded by the loser because it has no other choice (no previous state to compare with)
+        expect_content(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'), shared['md5_creator']) # this file should be re-uploaded by the loser because it has no other choice (no previous state to compare with)
 
 def finish_if_not_capable():
     # Finish the test if some of the prerequisites for this test are not satisfied
@@ -276,77 +303,4 @@ def checker(step):
     step(8,'final check')
 
     final_check(d,shared)
-    expect_no_conflict_files(d) 
-
-
-def final_check(d,shared):
-    """ This is the final check applicable to all workers - this reflects the status of the remote repository so everyone should be in sync.
-    The only potential differences are with locally generated conflict files.
-    """
-
-    list_files(d)
-    expect_content(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'), shared['md5_creator'])
-
-    expect_content(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'), shared['md5_loser'])
-
-    if not rmLocalStateDB:
-        expect_content(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'), shared['md5_loser'])
-    else:
-        expect_content(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'), shared['md5_creator']) # in this case, a conflict is created on the loser and file on the server stays the same
-
-    expect_content(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'), shared['md5_winner'])
-    expect_content(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'), shared['md5_winner']) 
-    expect_content(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'), shared['md5_winner'])     # a conflict on the loser, server not changed
-    expect_content(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'), shared['md5_winner'])  # a conflict on the loser, server not changed
-
-    if not rmLocalStateDB:
-        expect_no_deleted_files(d) # normally any deleted files should not come back
-    else:
-        expect_deleted_files(d, ['TEST_FILE_DELETED_LOSER.dat', 'TEST_FILE_DELETED_WINNER.dat']) # but not TEST_FILE_DELETED_BOTH.dat !
-        expect_content(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'), shared['md5_creator']) # this file should be downloaded by the loser because it has no other choice (no previous state to compare with)
-        expect_content(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'), shared['md5_creator']) # this file should be re-uploaded by the loser because it has no other choice (no previous state to compare with)
-
-###############################################################################
-
-def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud server...
-    """ Final verification: all local sync folders should look the same. We expect conflicts and handling of deleted files depending on the rmLocalStateDB option. See code for details.
-    """
-    import glob
-
-    list_files(d)
-    
-    conflict_files = glob.glob(os.path.join(d,'*_conflict-*-*'))
-
-    logger.debug('conflict files in %s: %s',d,conflict_files)
-
-    if not rmLocalStateDB:
-        # we expect exactly 1 conflict file
-
-        logger.warning("FIXME: currently winner gets a conflict file - exclude list should be updated and this assert modified for the winner")
-
-        error_check(len(conflict_files) == 1, "there should be exactly 1 conflict file (%d)"%len(conflict_files))
-    else:
-        # we expect exactly 3 conflict files
-        error_check(len(conflict_files) == 3, "there should be exactly 3 conflict files (%d)"%len(conflict_files))
-
-    for fn in conflict_files:
-
-        if not rmLocalStateDB:
-            error_check('_BOTH' in fn, """only files modified in BOTH workers have a conflict -  all other files should be conflict-free""")
-
-        else:
-            error_check('_BOTH' in fn or '_LOSER' in fn or '_WINNER' in fn, """files which are modified by ANY worker have a conflict now;  files which are not modified should not have a conflict""")
-
-    deleted_files = glob.glob(os.path.join(d,'*_DELETED*'))
-
-    logger.debug('deleted files in %s: %s',d,deleted_files)
-
-    if not rmLocalStateDB:
-        error_check(len(deleted_files) == 0, 'deleted files should not be there normally')
-    else:
-        # deleted files "reappear" if local sync db is lost on the loser, the only file that does not reappear is the DELETED_BOTH which was deleted on *all* local clients
-
-        error_check(len(deleted_files) == 2, "we expect exactly 2 deleted files")
-
-        for fn in deleted_files:
-            error_check('_LOSER' in fn or '_WINNER' in fn, "deleted files should only reappear if delete on only one client (but not on both at the same time) ")
+    expect_no_conflict_files(d)

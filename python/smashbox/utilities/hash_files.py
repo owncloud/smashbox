@@ -258,7 +258,7 @@ def cleanup_dir(wdir):
 def detect_conflict(wdir):
     import glob
     import hashlib
-    ll = glob.glob(wdir+'/test_conflict*.dat')
+    ll = get_conflict_files(wdir)
     nl = len(ll)
     if nl==0:
         return 0
