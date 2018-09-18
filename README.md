@@ -26,14 +26,16 @@ Quickstart
 
 - Find your localhost owncloud server ip using e.g. `ipconfig`
 - Execute smashbox run over that server e.g. `172.16.12.112:80/octest`. Ensure to mount `smashdir` directory to local filesystem to be able to debug test run
+- Smash wrapper will check if test nplusone exists in `lib` folder under `test_[name].py` scheme
 ```
 docker run \
 -e SMASHBOX_URL=172.16.12.112:80/octest \
 -e SMASHBOX_USERNAME=admin \
 -e SMASHBOX_PASSWORD=admin \
 -e SMASHBOX_ACCOUNT_PASSWORD=admin \
+-e SMASHBOX_TEST_NAME=nplusone \
 -v ~/smashdir:/smashdir \
-owncloud/smashbox lib/test_nplusone.py
+owncloud/smashbox
 ```
 - Check run logs
 ```
