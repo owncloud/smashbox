@@ -55,37 +55,25 @@ use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
 testsets = [
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
-        'test_numFilesToCreate':50,
+        'test_numFilesToCreate':5,
         'test_filesizeKB':20000,
         'use_new_dav_endpoint':True
     },
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
-        'test_numFilesToCreate':50,
+        'test_numFilesToCreate':5,
         'test_filesizeKB':20000,
-        'use_new_dav_endpoint':False
-    },
-    {
-        'test_sharePermissions':OCS_PERMISSION_ALL,
-        'test_numFilesToCreate':500,
-        'test_filesizeKB':2000,
-        'use_new_dav_endpoint':True
-    },
-    {
-        'test_sharePermissions':OCS_PERMISSION_ALL,
-        'test_numFilesToCreate':500,
-        'test_filesizeKB':2000,
         'use_new_dav_endpoint':False
     },
     {
         'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
-        'test_numFilesToCreate':50,
+        'test_numFilesToCreate':5,
         'test_filesizeKB':20000,
         'use_new_dav_endpoint':True
     },
     {
         'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
-        'test_numFilesToCreate':50,
+        'test_numFilesToCreate':5,
         'test_filesizeKB':20000,
         'use_new_dav_endpoint':False
     },
