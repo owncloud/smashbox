@@ -301,6 +301,21 @@ def get_conflict_files(d):
 
     return conflict_files
 
+def oc_server_url(protocol='http',user_num=None,hide_password=False):
+    """ Return the ownCloud URL """
+    if user_num is None:
+        username = "%s" % config.oc_account_name
+    else:
+        username = "%s%i" % (config.oc_account_name, user_num)
+
+    if hide_password:
+        password = "***"
+    else:
+        password = config.oc_account_password
+
+    return protocol + '://' + username + ':' + password + '@' + config.oc_server
+
+
 ######### WEBDAV AND SYNC UTILITIES #####################
 
 def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
@@ -318,17 +333,7 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
     remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
 
-    if user_num is None:
-        username = "%s" % config.oc_account_name
-    else:
-        username = "%s%i" % (config.oc_account_name, user_num)
-
-    if hide_password:
-        password = "***"
-    else:
-        password = config.oc_account_password
-
-    return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
+    return oc_server_url(protocol, user_num, hide_password).rstrip('/') + '/' + remote_path
 
 def oc_public_webdav_url(protocol='http',remote_folder="",token='',password=''):
     """ Get public Webdav URL
@@ -381,7 +386,7 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, use_new_da
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_server_url('owncloud',user_num)+" >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
