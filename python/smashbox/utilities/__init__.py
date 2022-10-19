@@ -42,10 +42,11 @@ def compare_client_version(compare_to, operator):
     cmd += ' --version'
     rtn_code, std_out, std_err = runcmd(cmd)
 
+    version_semantic_length = len(compare_to.split('.'))
     version = std_out[std_out.find(' version ') + 9:]
-    if version[-4:-1] == 'git':
-        version = version[:-4]
-
+    version = version.strip().split(' ')[0]
+    version = version.split('.')[:version_semantic_length]
+    version = '.'.join(version)
     return version_compare(version, operator, compare_to)
 
 
