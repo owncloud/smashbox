@@ -116,6 +116,10 @@ def finish_if_not_capable():
         #Dont test for <= 9.1 with new endpoint, since it is not supported
         logger.warn("Skipping test since webdav endpoint is not capable for this server version")
         return True
+    if compare_client_version('3.0', '>=') and use_new_dav_endpoint == False:
+        # Don't test for client version >= 3.0 with old endpoint, since it is not supported
+        logger.warn("Skipping test since old webdav endpoint is not support for this client version")
+        return True
     return False
 
 @add_worker
